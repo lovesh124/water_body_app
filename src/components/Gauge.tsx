@@ -9,6 +9,7 @@ interface GaugeProps {
 const Gauge: React.FC<GaugeProps> = ({ gauge }) => {
   const color = getStatusColor(gauge.status);
   const percentage = gauge.value !== null ? Math.min((gauge.value / getMaxValue(gauge.parameter)) * 100, 100) : 0;
+  const isLoading = gauge.value === null;
 
   return (
     <div className="bg-white rounded-lg shadow p-4">
@@ -28,39 +29,69 @@ const Gauge: React.FC<GaugeProps> = ({ gauge }) => {
             strokeWidth="10"
           />
           
-          {/* Progress circle */}
-          <circle
-            cx="60"
-            cy="60"
-            r="50"
-            fill="none"
-            stroke={color}
-            strokeWidth="10"
-            strokeDasharray={`${2 * Math.PI * 50}`}
-            strokeDashoffset={`${2 * Math.PI * 50 * (1 - percentage / 100)}`}
-            strokeLinecap="round"
-          />
+          {/* Progress circle or loading animation */}
+          {isLoading ? (
+            <circle
+              cx="60"
+              cy="60"
+              r="50"
+              fill="none"
+              stroke="#d1d5db"
+              strokeWidth="10"
+              strokeDasharray="20 10"
+              strokeLinecap="round"
+              className="animate-spin"
+              style={{ transformOrigin: 'center' }}
+            />
+          ) : (
+            <circle
+              cx="60"
+              cy="60"
+              r="50"
+              fill="none"
+              stroke={color}
+              strokeWidth="10"
+              strokeDasharray={`${2 * Math.PI * 50}`}
+              strokeDashoffset={`${2 * Math.PI * 50 * (1 - percentage / 100)}`}
+              strokeLinecap="round"
+            />
+          )}
         </svg>
         
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-bold" style={{ color }}>
-            {gauge.value !== null ? gauge.value.toFixed(2) : '--'}
-          </span>
-          <span className="text-xs text-gray-500">{gauge.unit}</span>
+          {isLoading ? (
+            <>
+              <div className="w-12 h-6 bg-gray-200 rounded animate-pulse mb-1"></div>
+              <div className="w-8 h-3 bg-gray-200 rounded animate-pulse"></div>
+            </>
+          ) : (
+            <>
+              <span className="text-2xl font-bold" style={{ color }}>
+                {gauge.value !== null ? gauge.value.toFixed(2) : '--'}
+              </span>
+              <span className="text-xs text-gray-500">{gauge.unit}</span>
+            </>
+          )}
         </div>
       </div>
       
       <div className="mt-2 text-center">
-        <span 
-          className="inline-block px-2 py-1 rounded text-xs font-semibold text-white"
-          style={{ backgroundColor: color }}
-        >
-          {gauge.status.toUpperCase()}
-        </span>
-        {gauge.date && (
-          <p className="text-xs text-gray-500 mt-1">
-            {new Date(gauge.date).toLocaleDateString()}
-          </p>
+        {isLoading ? (
+          <div className="w-20 h-6 bg-gray-200 rounded animate-pulse mx-auto"></div>
+        ) : (
+          <>
+            <span 
+              className="inline-block px-2 py-1 rounded text-xs font-semibold text-white"
+              style={{ backgroundColor: color }}
+            >
+              {gauge.status.toUpperCase()}
+            </span>
+            {gauge.date && (
+              <p className="text-xs text-gray-500 mt-1">
+                {new Date(gauge.date).toLocaleDateString()}
+              </p>
+            )}
+          </>
         )}
       </div>
     </div>

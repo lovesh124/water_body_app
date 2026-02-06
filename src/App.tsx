@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import MapComponent from './components/MapComponent';
 import Sidebar from './components/Sidebar';
 import { Waterbody } from './types';
@@ -7,10 +7,10 @@ function App() {
   const [selectedWaterbody, setSelectedWaterbody] = useState<Waterbody | null>(null);
   const [selectedCounty, setSelectedCounty] = useState<string>('Hillsborough');
 
-  const handleWaterbodySelect = (waterbody: Waterbody) => {
+  const handleWaterbodySelect = useCallback((waterbody: Waterbody) => {
     console.log('App received waterbody:', waterbody);
     setSelectedWaterbody(waterbody);
-  };
+  }, []);
 
   return (
     <div className="flex flex-col w-full h-screen">

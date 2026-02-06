@@ -13,6 +13,12 @@ const MapComponent: React.FC<MapComponentProps> = ({ onWaterbodySelect, county, 
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const layerRef = useRef<any>(null);
+  const onWaterbodySelectRef = useRef(onWaterbodySelect);
+
+  // Keep the callback ref up to date
+  useEffect(() => {
+    onWaterbodySelectRef.current = onWaterbodySelect;
+  }, [onWaterbodySelect]);
 
   // Counties available in the Water Atlas service
   // These are based on the ATLAS_<COUNTY> fields in the service
@@ -80,7 +86,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ onWaterbodySelect, county, 
         map.fitBounds(e.layer.getBounds());
       }
 
-      onWaterbodySelect(waterbody);
+      onWaterbodySelectRef.current(waterbody);
     });
 
     // Handle hover effect
@@ -102,7 +108,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ onWaterbodySelect, county, 
       map.remove();
       mapRef.current = null;
     };
-  }, [onWaterbodySelect, county]);
+  }, [county]);
 
   return (
     <div className="relative w-full h-full">

@@ -1,8 +1,8 @@
 export interface Waterbody {
   WBODYID: string;
   WATERBODYNAME: string;
-  WBODYTYPE: string;
-  SURFAREA_ACRES: number;
+  WBODYTYPE: string | null;
+  SURFAREA_ACRES: number | null;
   geometry?: any;
 }
 

@@ -7,7 +7,7 @@ const BASE_URL = import.meta.env.DEV ? '' : 'https://dev.api.wateratlas.org';
 
 export const api = axios.create({
   baseURL: BASE_URL,
-  timeout: 10000,
+  timeout: 60000, // Increased to 60 seconds
 });
 
 export const getSamplingLocations = async (waterBodyId: string): Promise<SamplingStation[]> => {

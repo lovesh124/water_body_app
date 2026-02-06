@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Waterbody, SamplingStation, WaterQualityGauge } from '../types';
-import { getSamplingLocations, getLatestSamplingData } from '../services/api';
+import { getSamplingLocations, getSamplingData } from '../services/api';
 import { PARAMETERS, PARAMETER_LABELS, PARAMETER_UNITS, evaluateWaterQuality } from '../utils/waterQuality';
 import { exportToCSV } from '../utils/waterQuality';
 import Gauge from './Gauge';
@@ -41,40 +41,54 @@ const Sidebar: React.FC<SidebarProps> = ({ waterbody, onClose }) => {
     setStations(samplingStations);
 
     if (samplingStations.length > 0) {
-      // Load latest water quality data
       const stationIds = samplingStations.map(s => s.stationId);
       const parameters = [PARAMETERS.DO, PARAMETERS.CHLA, PARAMETERS.TN, PARAMETERS.TP];
       
-      const latestData = await getLatestSamplingData(stationIds, parameters);
+      // Initialize gauges with loading state
+      const initialGauges: WaterQualityGauge[] = parameters.map(param => ({
+        parameter: param,
+        value: null,
+        unit: PARAMETER_UNITS[param],
+        status: 'unknown' as const,
+        date: null
+      }));
+      setGauges(initialGauges);
+      setLoading(false); // Show the skeleton gauges
       
-      const newGauges: WaterQualityGauge[] = parameters.map(param => {
-        const data = latestData.get(param);
-        
-        if (data) {
-          return {
-            parameter: param,
-            value: data.value,
-            unit: PARAMETER_UNITS[param],
-            status: evaluateWaterQuality(param, data.value),
-            date: data.dateTime
-          };
+      // Load data for each parameter progressively
+      for (let i = 0; i < parameters.length; i++) {
+        const param = parameters[i];
+        try {
+          const data = await getSamplingData(stationIds, param);
+          
+          if (data.length > 0) {
+            // Get the most recent data point
+            const latest = data.sort((a: any, b: any) => 
+              new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime()
+            )[0];
+            
+            // Update the specific gauge
+            setGauges(prevGauges => {
+              const newGauges = [...prevGauges];
+              newGauges[i] = {
+                parameter: param,
+                value: latest.value,
+                unit: PARAMETER_UNITS[param],
+                status: evaluateWaterQuality(param, latest.value),
+                date: latest.dateTime
+              };
+              return newGauges;
+            });
+          }
+        } catch (error) {
+          console.error(`Error loading data for parameter ${param}:`, error);
+          // Keep the gauge in loading/unknown state
         }
-        
-        return {
-          parameter: param,
-          value: null,
-          unit: PARAMETER_UNITS[param],
-          status: 'unknown',
-          date: null
-        };
-      });
-      
-      setGauges(newGauges);
+      }
     } else {
       setGauges([]);
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   const handleExport = () => {
@@ -121,7 +135,7 @@ const Sidebar: React.FC<SidebarProps> = ({ waterbody, onClose }) => {
                   <h2 className="text-2xl font-bold text-gray-800">
                     {waterbody.WATERBODYNAME}
                   </h2>
-                  <p className="text-sm text-gray-500">{waterbody.WBODYTYPE}</p>
+                  <p className="text-sm text-gray-500">{waterbody.WBODYTYPE || 'Waterbody'}</p>
                 </div>
                 {onClose && (
                   <button
@@ -140,7 +154,7 @@ const Sidebar: React.FC<SidebarProps> = ({ waterbody, onClose }) => {
               <div>
                 <p className="text-gray-500">Size</p>
                 <p className="font-semibold">
-                  {waterbody.SURFAREA_ACRES.toFixed(1)} acres
+                  {waterbody.SURFAREA_ACRES != null ? `${waterbody.SURFAREA_ACRES.toFixed(1)} acres` : 'N/A'}
                 </p>
               </div>
               <div>
