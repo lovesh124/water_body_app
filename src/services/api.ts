@@ -1,7 +1,9 @@
 import axios from 'axios';
 import { SamplingStation, WaterQualityData } from '../types';
 
-const BASE_URL = 'https://dev.api.wateratlas.org';
+// Use relative URL in development (proxied via Vite)
+// In production, this should be the full API URL
+const BASE_URL = import.meta.env.DEV ? '' : 'https://dev.api.wateratlas.org';
 
 export const api = axios.create({
   baseURL: BASE_URL,
@@ -15,6 +17,12 @@ export const getSamplingLocations = async (waterBodyId: string): Promise<Samplin
       params: { waterBodyId }
     });
     console.log('API response:', response.data);
+    
+    // Handle paginated response - extract items array
+    if (response.data && response.data.items) {
+      return response.data.items;
+    }
+    
     return response.data || [];
   } catch (error) {
     console.error('Error fetching sampling locations:', error);

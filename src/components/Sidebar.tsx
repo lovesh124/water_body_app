@@ -21,6 +21,11 @@ const Sidebar: React.FC<SidebarProps> = ({ waterbody, onClose }) => {
     if (waterbody) {
       console.log('Loading data for waterbody:', waterbody);
       loadWaterbodyData();
+    } else {
+      // Reset state when no waterbody is selected
+      setStations([]);
+      setGauges([]);
+      setLoading(false);
     }
   }, [waterbody]);
 
@@ -86,29 +91,48 @@ const Sidebar: React.FC<SidebarProps> = ({ waterbody, onClose }) => {
     exportToCSV(exportData, `${waterbody?.WATERBODYNAME}_water_quality.csv`);
   };
 
-  if (!waterbody) {
-    return null;
-  }
-
   return (
     <>
-      <div className="absolute top-0 right-0 w-full md:w-96 h-full bg-white shadow-lg z-10 overflow-y-auto">
-        <div className="p-6">
-          {/* Header */}
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-800">
-                {waterbody.WATERBODYNAME}
-              </h2>
-              <p className="text-sm text-gray-500">{waterbody.WBODYTYPE}</p>
+      <div className="w-full h-full bg-white border-l border-gray-200">
+        <div className="p-6 h-full overflow-y-auto">
+          {/* No Waterbody Selected State */}
+          {!waterbody && (
+            <div className="flex flex-col items-center justify-center h-full text-center">
+              <div className="mb-4">
+                <svg className="w-24 h-24 text-gray-300 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-700 mb-2">
+                Select a Waterbody
+              </h3>
+              <p className="text-gray-500 max-w-sm">
+                Click on any waterbody on the map to view its water quality data and historical trends.
+              </p>
             </div>
-            <button
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 text-2xl"
-            >
-              ×
-            </button>
-          </div>
+          )}
+
+          {/* Waterbody Selected State */}
+          {waterbody && (
+            <>
+              {/* Header */}
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex-1">
+                  <h2 className="text-2xl font-bold text-gray-800">
+                    {waterbody.WATERBODYNAME}
+                  </h2>
+                  <p className="text-sm text-gray-500">{waterbody.WBODYTYPE}</p>
+                </div>
+                {onClose && (
+                  <button
+                    onClick={onClose}
+                    className="text-gray-500 hover:text-gray-700 text-2xl ml-2 md:hidden"
+                    title="Clear selection"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
 
           {/* Waterbody Info */}
           <div className="bg-gray-50 rounded-lg p-4 mb-6">
@@ -190,18 +214,20 @@ const Sidebar: React.FC<SidebarProps> = ({ waterbody, onClose }) => {
           )}
 
           {/* No Stations Message */}
-          {!loading && stations.length === 0 && (
+          {!loading && stations.length === 0 && waterbody && (
             <div className="text-center py-8">
               <p className="text-gray-500">
                 No sampling stations found for this waterbody.
               </p>
             </div>
           )}
+            </>
+          )}
         </div>
       </div>
 
       {/* Historical Chart Modal */}
-      {showChart && (
+      {showChart && waterbody && (
         <HistoricalChart
           stationIds={stations.map(s => s.stationId)}
           onClose={() => setShowChart(false)}

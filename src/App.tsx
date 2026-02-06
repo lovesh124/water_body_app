@@ -5,6 +5,7 @@ import { Waterbody } from './types';
 
 function App() {
   const [selectedWaterbody, setSelectedWaterbody] = useState<Waterbody | null>(null);
+  const [selectedCounty, setSelectedCounty] = useState<string>('Hillsborough');
 
   const handleWaterbodySelect = (waterbody: Waterbody) => {
     console.log('App received waterbody:', waterbody);
@@ -12,9 +13,9 @@ function App() {
   };
 
   return (
-    <div className="relative w-full h-screen">
+    <div className="flex flex-col w-full h-screen">
       {/* Header */}
-      <div className="absolute top-0 left-0 right-0 bg-white shadow-md z-20 px-6 py-4">
+      <div className="bg-white shadow-md z-20 px-6 py-4">
         <h1 className="text-2xl font-bold text-gray-800">
           Florida Waterbody Water Quality Dashboard
         </h1>
@@ -23,18 +24,25 @@ function App() {
         </p>
       </div>
 
-      {/* Map */}
-      <div className="absolute top-20 left-0 right-0 bottom-0">
-        <MapComponent onWaterbodySelect={handleWaterbodySelect} />
-      </div>
+      {/* Main Content - 50/50 split on desktop, stacked on mobile */}
+      <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+        {/* Map - Left side on desktop, top on mobile */}
+        <div className="w-full md:w-1/2 h-64 md:h-full">
+          <MapComponent 
+            onWaterbodySelect={handleWaterbodySelect}
+            county={selectedCounty}
+            onCountyChange={setSelectedCounty}
+          />
+        </div>
 
-      {/* Sidebar */}
-      {selectedWaterbody && (
-        <Sidebar
-          waterbody={selectedWaterbody}
-          onClose={() => setSelectedWaterbody(null)}
-        />
-      )}
+        {/* Sidebar - Right side on desktop, bottom on mobile */}
+        <div className="w-full md:w-1/2 h-full overflow-y-auto">
+          <Sidebar
+            waterbody={selectedWaterbody}
+            onClose={() => setSelectedWaterbody(null)}
+          />
+        </div>
+      </div>
     </div>
   );
 }
