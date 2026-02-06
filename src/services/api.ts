@@ -10,12 +10,19 @@ export const api = axios.create({
 
 export const getSamplingLocations = async (waterBodyId: string): Promise<SamplingStation[]> => {
   try {
+    console.log('API call: getSamplingLocations for waterBodyId:', waterBodyId);
     const response = await api.get(`/api/sampling-locations`, {
       params: { waterBodyId }
     });
+    console.log('API response:', response.data);
     return response.data || [];
   } catch (error) {
     console.error('Error fetching sampling locations:', error);
+    if (axios.isAxiosError(error)) {
+      console.error('Response data:', error.response?.data);
+      console.error('Response status:', error.response?.status);
+      console.error('Request URL:', error.config?.url);
+    }
     return [];
   }
 };

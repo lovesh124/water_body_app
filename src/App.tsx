@@ -6,6 +6,11 @@ import { Waterbody } from './types';
 function App() {
   const [selectedWaterbody, setSelectedWaterbody] = useState<Waterbody | null>(null);
 
+  const handleWaterbodySelect = (waterbody: Waterbody) => {
+    console.log('App received waterbody:', waterbody);
+    setSelectedWaterbody(waterbody);
+  };
+
   return (
     <div className="relative w-full h-screen">
       {/* Header */}
@@ -20,7 +25,7 @@ function App() {
 
       {/* Map */}
       <div className="absolute top-20 left-0 right-0 bottom-0">
-        <MapComponent onWaterbodySelect={setSelectedWaterbody} />
+        <MapComponent onWaterbodySelect={handleWaterbodySelect} />
       </div>
 
       {/* Sidebar */}

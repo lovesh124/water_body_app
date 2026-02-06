@@ -46,6 +46,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ onWaterbodySelect }) => {
 
     // Handle waterbody click
     waterbodyLayer.on('click', function (e: any) {
+      console.log('Waterbody clicked:', e.layer.feature.properties);
       const props = e.layer.feature.properties;
       const waterbody: Waterbody = {
         WBODYID: props.WBODYID,
@@ -54,6 +55,8 @@ const MapComponent: React.FC<MapComponentProps> = ({ onWaterbodySelect }) => {
         SURFAREA_ACRES: props.SURFAREA_ACRES,
         geometry: e.layer.feature.geometry
       };
+
+      console.log('Passing waterbody to sidebar:', waterbody);
 
       // Zoom to waterbody bounds
       if (e.layer.getBounds) {

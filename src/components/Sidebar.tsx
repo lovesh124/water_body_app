@@ -19,6 +19,7 @@ const Sidebar: React.FC<SidebarProps> = ({ waterbody, onClose }) => {
 
   useEffect(() => {
     if (waterbody) {
+      console.log('Loading data for waterbody:', waterbody);
       loadWaterbodyData();
     }
   }, [waterbody]);
@@ -27,9 +28,11 @@ const Sidebar: React.FC<SidebarProps> = ({ waterbody, onClose }) => {
     if (!waterbody) return;
 
     setLoading(true);
+    console.log('Fetching sampling stations for WBODYID:', waterbody.WBODYID);
     
     // Load sampling stations
     const samplingStations = await getSamplingLocations(waterbody.WBODYID);
+    console.log('Sampling stations received:', samplingStations);
     setStations(samplingStations);
 
     if (samplingStations.length > 0) {
