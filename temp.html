@@ -1,0 +1,816 @@
+<h1
+id="functional-requirements-document-interactive-waterbody-map-application">Functional
+Requirements Document: Interactive Waterbody Map Application</h1>
+<hr />
+<h2 id="executive-summary">1. Executive Summary</h2>
+<h3 id="purpose">1.1 Purpose</h3>
+<p>Develop a web-based interactive mapping application that enables
+users to explore Florida waterbodies, view sampling station locations,
+and analyze historical water quality data through intuitive
+visualizations.</p>
+<h3 id="scope">1.2 Scope</h3>
+<p>The application will integrate ArcGIS MapServer layers for waterbody
+geometry with WaterAtlas API for sampling data, focusing on four key
+water quality parameters: Dissolved Oxygen (DO), Chlorophyll-a (Chla),
+Total Nitrogen (TN), and Total Phosphorus (TP).</p>
+<h3 id="reference-implementation">1.3 Reference Implementation</h3>
+<p>PCDEM Shiny Dashboard:
+https://pcdem.shinyapps.io/dashboard/#section-water-quality</p>
+<hr />
+<h2 id="system-overview">2. System Overview</h2>
+<h3 id="data-sources">2.1 Data Sources</h3>
+<p><strong>Primary Map Layer:</strong> - <strong>Source:</strong> USF
+Water Institute ArcGIS MapServer - <strong>URL:</strong>
+https://gis.waterinstitute.usf.edu/arcgis/rest/services/Maps/WaterAtlas_FrontPage/MapServer/14
+- <strong>Data Type:</strong> Waterbody polygons with metadata (name,
+type, coordinates, surface area)</p>
+<p><strong>Water Quality Data API:</strong> - <strong>Source:</strong>
+WaterAtlas Development API - <strong>Base URL:</strong>
+https://dev.api.wateratlas.org - <strong>Key Endpoints:</strong> -
+<code>/api/sampling-locations</code> - Station locations within
+waterbodies - <code>/api/samplingdata</code> - Historical water quality
+measurements - <code>/api/parameters</code> - Parameter metadata and
+definitions</p>
+<h3 id="target-parameters">2.2 Target Parameters</h3>
+<ul>
+<li><strong>DO_mgl:</strong> Dissolved Oxygen (mg/L)</li>
+<li><strong>Chla_ugl:</strong> Chlorophyll-a (µg/L)</li>
+<li><strong>TN_mgl:</strong> Total Nitrogen (mg/L)</li>
+<li><strong>TP_mgl:</strong> Total Phosphorus (mg/L)</li>
+</ul>
+<hr />
+<h2 id="functional-requirements">3. Functional Requirements</h2>
+<h3 id="map-display-and-navigation">3.1 Map Display and Navigation</h3>
+<p><strong>FR-3.1.1: Base Map Rendering</strong> -
+<strong>Description:</strong> Display an interactive web map centered on
+Florida waterbodies - <strong>Acceptance Criteria:</strong> - Map loads
+with default view centered at coordinates [27.9°N, -82.5°W] - Zoom level
+set to 9 on initial load - Base map tiles (OpenStreetMap or similar)
+render properly - Map supports pan, zoom, and standard navigation
+controls - Mobile-responsive and touch-enabled</p>
+<p><strong>FR-3.1.2: Waterbody Layer Display</strong> -
+<strong>Description:</strong> Overlay waterbody polygons from ArcGIS
+MapServer layer 14 - <strong>Acceptance Criteria:</strong> - All
+waterbody polygons render with semi-transparent fill (30% opacity) -
+Polygon boundaries display with 2px stroke - Visual styling
+distinguishes waterbodies from base map - Layer performs efficiently
+with 2000+ features - Polygons highlight on hover to indicate
+interactivity</p>
+<p><strong>FR-3.1.3: Waterbody Selection</strong> -
+<strong>Description:</strong> Enable users to click waterbody polygons
+to select them - <strong>Acceptance Criteria:</strong> - Click on any
+waterbody polygon triggers selection event - Selected waterbody visually
+highlights (different color/opacity) - Map centers/zooms to selected
+waterbody extent - Only one waterbody can be selected at a time - Click
+outside deselects current waterbody</p>
+<hr />
+<h3 id="waterbody-information-display">3.2 Waterbody Information
+Display</h3>
+<p><strong>FR-3.2.1: Waterbody Details Panel</strong> -
+<strong>Description:</strong> Display metadata for selected waterbody -
+<strong>Data Fields:</strong> - Waterbody Name
+(<code>WATERBODYNAME</code>) - Waterbody Type (<code>WBODYTYPE</code>) -
+e.g., Lake, River, Bay, Estuary - Alternative Names
+(<code>ALTNAMES</code>) - Surface Area (<code>SURFAREA_ACRES</code>) in
+acres - River Length (<code>RIVERLENGTH_FT</code>) in feet (if
+applicable) - Associated Atlas Region (<code>ATLAS</code>) - Coordinates
+(<code>LATITUDE_DD</code>, <code>LONGITUDE_DD</code>) - Waterbody ID
+(<code>WBODYID</code>) - <strong>Acceptance Criteria:</strong> - Panel
+opens automatically when waterbody is selected - All available fields
+display in user-friendly format - Null/empty fields are hidden or show
+“N/A” - Panel can be minimized/closed by user - Panel is responsive on
+mobile devices</p>
+<hr />
+<h3 id="sampling-station-management">3.3 Sampling Station
+Management</h3>
+<p><strong>FR-3.3.1: Fetch Sampling Locations</strong> -
+<strong>Description:</strong> Retrieve all sampling stations associated
+with selected waterbody - <strong>API Integration:</strong> -
+<strong>Endpoint:</strong> <code>GET /api/sampling-locations</code> -
+<strong>Parameters:</strong> <code>waterBodyId={WBODYID}</code>,
+<code>pageSize=100</code> - <strong>Acceptance Criteria:</strong> - API
+call triggers automatically when waterbody is selected - System handles
+pagination if stations exceed pageSize - Loading indicator displays
+during API call - Error handling for failed requests (retry logic) -
+Empty results display appropriate message</p>
+<p><strong>FR-3.3.2: Display Station Markers</strong> -
+<strong>Description:</strong> Render markers on map for each sampling
+station - <strong>Acceptance Criteria:</strong> - Each station displays
+as a distinct map marker/pin - Markers positioned at exact lat/long
+coordinates from API - Markers layered above waterbody polygons - Visual
+distinction from waterbody polygons (different icon/color) - Markers
+cluster when zoomed out (optional enhancement)</p>
+<p><strong>FR-3.3.3: Station Information Popups</strong> -
+<strong>Description:</strong> Show station details when marker is
+clicked - <strong>Data Fields:</strong> - Station Name
+(<code>name</code>) - Station ID (<code>stationId</code>) - Data Source
+(<code>dataSource</code>) - organization collecting data - County
+(<code>county</code>) - Coordinates (<code>latitude</code>,
+<code>longitude</code>) - Link/button to view station data -
+<strong>Acceptance Criteria:</strong> - Popup appears on marker click -
+Popup styled consistently with application design - Close button
+provided - Clicking another marker closes previous popup</p>
+<p><strong>FR-3.3.4: Station List Sidebar</strong> -
+<strong>Description:</strong> Display list of all stations in selected
+waterbody - <strong>Acceptance Criteria:</strong> - List updates when
+new waterbody is selected - Shows station count (e.g., “15 stations
+found”) - Each list item displays station name and ID - Clicking list
+item highlights corresponding marker - List is scrollable if many
+stations exist - Option to select multiple stations for comparison</p>
+<hr />
+<h3 id="water-quality-data-retrieval">3.4 Water Quality Data
+Retrieval</h3>
+<p><strong>FR-3.4.1: Fetch Sampling Data</strong> -
+<strong>Description:</strong> Retrieve water quality measurements for
+selected stations - <strong>API Integration:</strong> -
+<strong>Endpoint:</strong> <code>GET /api/samplingdata</code> -
+<strong>Parameters:</strong> - <code>stationIds</code> - Array of
+selected station IDs - <code>parameter</code> - One of:
+<code>DO_mgl</code>, <code>Chla_ugl</code>, <code>TN_mgl</code>,
+<code>TP_mgl</code> - <code>startDate</code> - Optional date filter (ISO
+8601 format) - <code>endDate</code> - Optional date filter -
+<code>pageSize=5000</code> - Large size to minimize pagination -
+<strong>Acceptance Criteria:</strong> - API calls made when user selects
+stations and parameters - System handles multiple station IDs in single
+request - Data fetched for all four target parameters - Caching
+implemented to avoid redundant API calls - Loading states indicate data
+retrieval progress</p>
+<p><strong>FR-3.4.2: Data Processing and Aggregation</strong> -
+<strong>Description:</strong> Transform raw API data into chart-ready
+format - <strong>Processing Requirements:</strong> - Parse date strings
+to Date objects - Convert string coordinates to numeric values - Group
+measurements by parameter type - Sort chronologically by
+<code>activityStartDate</code> - Handle duplicate measurements (average
+or flag) - Filter out invalid/null values - Calculate basic statistics
+(min, max, mean, median) - <strong>Acceptance Criteria:</strong> -
+Processed data structure matches chart library requirements - Invalid
+data points logged and excluded from charts - Processing completes
+within 2 seconds for 5000 records - Memory usage remains reasonable for
+large datasets</p>
+<hr />
+<h3 id="data-visualization">3.5 Data Visualization</h3>
+<p><strong>FR-3.5.1: Time Series Charts</strong> -
+<strong>Description:</strong> Display water quality parameter trends
+over time - <strong>Chart Types:</strong> - Line charts for temporal
+trends - Scatter plots for individual measurements - Optional: Combined
+line + scatter - <strong>Chart Features:</strong> - X-axis: Date/time -
+Y-axis: Parameter value with appropriate units - Chart title includes
+parameter name and station(s) - Legend if multiple stations displayed -
+Tooltips showing exact values on hover - Zoom/pan capabilities for
+detailed analysis - Export chart as image (PNG/SVG) - <strong>Acceptance
+Criteria:</strong> - Charts render within 3 seconds of data load -
+Responsive sizing based on container - Smooth animations and transitions
+- Accessible to screen readers</p>
+<p><strong>FR-3.5.2: Multi-Parameter Dashboard</strong> -
+<strong>Description:</strong> Display all four parameters simultaneously
+- <strong>Layout Options:</strong> - 2x2 grid of charts (one per
+parameter) - Tabbed interface to switch between parameters - Dropdown
+selector for active parameter - <strong>Acceptance Criteria:</strong> -
+All four parameter charts available - Charts synchronized (same time
+range, zoom level) - User can toggle between individual and combined
+views - Performance remains smooth with all charts visible</p>
+<p><strong>FR-3.5.3: Parameter Comparison</strong> -
+<strong>Description:</strong> Overlay multiple stations on single chart
+- <strong>Acceptance Criteria:</strong> - Different color/style for each
+station - Clear legend identifying each station - Option to show/hide
+individual stations - Statistical comparison (which station has higher
+values)</p>
+<p><strong>FR-3.5.4: Data Table View</strong> -
+<strong>Description:</strong> Display raw data in tabular format -
+<strong>Columns:</strong> - Date/Time - Station ID - Parameter - Value -
+Unit - Data Source - Comments (if any) - <strong>Acceptance
+Criteria:</strong> - Sortable by any column - Filterable by date range,
+station, parameter - Paginated for large datasets - Export to CSV
+functionality - Copy to clipboard option</p>
+<hr />
+<h3 id="filtering-and-date-selection">3.6 Filtering and Date
+Selection</h3>
+<p><strong>FR-3.6.1: Date Range Picker</strong> -
+<strong>Description:</strong> Allow users to filter data by temporal
+range - <strong>Features:</strong> - Calendar-based date picker UI -
+Predefined ranges: Last 30 days, 90 days, 1 year, 5 years, All time -
+Custom date range selection - Start date and end date inputs -
+<strong>Acceptance Criteria:</strong> - Date picker opens on click -
+Invalid date ranges prevented (end before start) - Date selection
+triggers data re-fetch - Default range: Last 1 year - Maximum range: All
+available data</p>
+<p><strong>FR-3.6.2: Parameter Selector</strong> -
+<strong>Description:</strong> Toggle between different water quality
+parameters - <strong>Acceptance Criteria:</strong> - Radio buttons or
+dropdown for four parameters - Parameter names display with full
+descriptions - Selection updates charts immediately - Current parameter
+highlighted/indicated - Keyboard navigation supported</p>
+<p><strong>FR-3.6.3: Station Filter</strong> -
+<strong>Description:</strong> Select which stations to include in
+analysis - <strong>Features:</strong> - Checkboxes for each station -
+“Select All” / “Deselect All” buttons - Search/filter stations by name
+or ID - <strong>Acceptance Criteria:</strong> - At least one station
+must be selected - Chart updates when selection changes - Selected
+stations persist until waterbody changes - Visual indicator of selection
+count</p>
+<hr />
+<h3 id="user-experience-features">3.7 User Experience Features</h3>
+<p><strong>FR-3.7.1: Loading States</strong> -
+<strong>Description:</strong> Provide feedback during asynchronous
+operations - <strong>Acceptance Criteria:</strong> - Spinner/skeleton
+screen during map load - Loading indicator during API calls - Progress
+bar for large data fetches - Disabled buttons prevent duplicate requests
+- Timeout handling (30 second max)</p>
+<p><strong>FR-3.7.2: Error Handling</strong> -
+<strong>Description:</strong> Gracefully handle failures and edge cases
+- <strong>Error Scenarios:</strong> - Network connectivity issues - API
+server errors (500, 503) - Invalid waterbody ID (no stations found) - No
+data available for selected date range - CORS issues - Timeout errors -
+<strong>Acceptance Criteria:</strong> - User-friendly error messages (no
+technical jargon) - Retry button for failed requests - Automatic retry
+with exponential backoff - Fallback content when data unavailable -
+Error logging for debugging</p>
+<p><strong>FR-3.7.3: Caching Strategy</strong> -
+<strong>Description:</strong> Store API responses to improve performance
+- <strong>Caching Rules:</strong> - Waterbody layer geometry: Cache for
+session - Sampling locations: Cache for 24 hours - Sampling data: Cache
+for 1 hour - Parameter definitions: Cache indefinitely -
+<strong>Acceptance Criteria:</strong> - localStorage used for
+client-side cache - Cache keys include relevant parameters (waterbody
+ID, date range) - Cache invalidation logic implemented - Manual cache
+clear option in settings - Cache size monitoring (max 5MB)</p>
+<p><strong>FR-3.7.4: Responsive Design</strong> -
+<strong>Description:</strong> Optimize layout for different screen sizes
+- <strong>Breakpoints:</strong> - Mobile: &lt; 768px - Tablet: 768px -
+1024px - Desktop: &gt; 1024px - <strong>Acceptance Criteria:</strong> -
+Map scales appropriately on all devices - Sidebar becomes bottom drawer
+on mobile - Charts stack vertically on narrow screens - Touch gestures
+work on mobile (pinch zoom, swipe) - Text readable without zooming -
+Interactive elements have sufficient touch targets (min 44x44px)</p>
+<p><strong>FR-3.7.5: Accessibility</strong> -
+<strong>Description:</strong> Ensure application is usable by all users
+- <strong>Requirements:</strong> - WCAG 2.1 Level AA compliance -
+Keyboard navigation for all features - Screen reader support (ARIA
+labels) - Color contrast ratios meet standards - Alt text for non-text
+content - Focus indicators visible - No seizure-inducing animations -
+<strong>Acceptance Criteria:</strong> - Passes automated accessibility
+audits (Lighthouse, axe) - Manual testing with screen readers (NVDA,
+VoiceOver) - Keyboard-only navigation possible</p>
+<hr />
+<h3 id="additional-information-features">3.8 Additional Information
+Features</h3>
+<p><strong>FR-3.8.1: Parameter Information</strong> -
+<strong>Description:</strong> Display detailed information about water
+quality parameters - <strong>API Integration:</strong> -
+<strong>Endpoint:</strong> <code>GET /api/parameters</code> -
+<strong>Information Displayed:</strong> - Full parameter name -
+Description and significance - Measurement units - Typical ranges
+(normal, concerning, critical) - Regulatory thresholds (if applicable) -
+Environmental impacts - <strong>Acceptance Criteria:</strong> - Info
+icon or link next to parameter names - Modal or tooltip displays
+parameter details - Content written for non-technical audience -
+Sources/references provided</p>
+<p><strong>FR-3.8.2: Data Source Attribution</strong> -
+<strong>Description:</strong> Credit organizations providing water
+quality data - <strong>Acceptance Criteria:</strong> - Data source
+displayed in chart legends - Full organization names shown (not just
+codes) - Link to data provider website (if available) - Collection
+methodology information - Last updated timestamp</p>
+<hr />
+<h2 id="non-functional-requirements">4. Non-Functional Requirements</h2>
+<h3 id="performance">4.1 Performance</h3>
+<p><strong>NFR-4.1.1: Load Times</strong> - Initial page load: &lt; 3
+seconds - Map tile rendering: &lt; 2 seconds - API response processing:
+&lt; 2 seconds - Chart rendering: &lt; 3 seconds for 5000 data points -
+Waterbody selection response: &lt; 1 second</p>
+<p><strong>NFR-4.1.2: Scalability</strong> - Support rendering 2000+
+waterbody polygons - Handle 100+ sampling stations per waterbody -
+Process 5000+ data points per parameter - Maintain smooth interactions
+(60 fps)</p>
+<p><strong>NFR-4.1.3: Optimization</strong> - Lazy loading for
+off-screen content - Code splitting for faster initial load -
+Image/asset optimization - Minification and compression of JS/CSS - CDN
+delivery for static assets</p>
+<h3 id="compatibility">4.2 Compatibility</h3>
+<p><strong>NFR-4.2.1: Browser Support</strong> - Chrome (last 2
+versions) - Firefox (last 2 versions) - Safari (last 2 versions) - Edge
+(last 2 versions) - Mobile browsers (iOS Safari, Chrome Android)</p>
+<p><strong>NFR-4.2.2: Device Support</strong> - Desktop (Windows, macOS,
+Linux) - Tablets (iPad, Android tablets) - Mobile phones (iOS, Android)
+- Minimum screen size: 320px width</p>
+<h3 id="security">4.3 Security</h3>
+<p><strong>NFR-4.3.1: Data Privacy</strong> - No personal identifiable
+information collected - No user authentication required (public data) -
+HTTPS encryption for all API calls - Content Security Policy headers</p>
+<p><strong>NFR-4.3.2: API Security</strong> - Rate limiting compliance -
+API key management (if required) - Input validation/sanitization - XSS
+prevention</p>
+<h3 id="maintainability">4.4 Maintainability</h3>
+<p><strong>NFR-4.4.1: Code Quality</strong> - TypeScript for type safety
+- ESLint for code linting - Prettier for code formatting - Unit test
+coverage &gt; 80% - Component-based architecture</p>
+<p><strong>NFR-4.4.2: Documentation</strong> - Inline code comments for
+complex logic - README with setup instructions - API integration
+documentation - Deployment guide - Architecture decision records</p>
+<hr />
+<h2 id="technical-architecture">5. Technical Architecture</h2>
+<h3 id="recommended-technology-stack">5.1 Recommended Technology
+Stack</h3>
+<p><strong>Frontend Framework:</strong> React 18+ with TypeScript<br />
+<strong>Build Tool:</strong> Vite<br />
+<strong>Mapping Library:</strong> Leaflet + Esri-Leaflet<br />
+<strong>Charting Library:</strong> Chart.js or Plotly.js<br />
+<strong>HTTP Client:</strong> Axios<br />
+<strong>State Management:</strong> Zustand or React Context<br />
+<strong>Styling:</strong> Tailwind CSS or CSS Modules<br />
+<strong>Date Handling:</strong> date-fns</p>
+<h3 id="project-structure">5.2 Project Structure</h3>
+<pre><code>waterbody-app/
+├── public/
+│   └── index.html
+├── src/
+│   ├── components/
+│   │   ├── Map/
+│   │   │   ├── WaterbodyMap.tsx
+│   │   │   ├── WaterbodyLayer.tsx
+│   │   │   ├── StationMarkers.tsx
+│   │   │   └── MapControls.tsx
+│   │   ├── Charts/
+│   │   │   ├── TimeSeriesChart.tsx
+│   │   │   ├── MultiParameterDashboard.tsx
+│   │   │   └── DataTable.tsx
+│   │   ├── Sidebar/
+│   │   │   ├── WaterbodyInfo.tsx
+│   │   │   ├── StationList.tsx
+│   │   │   ├── DateRangePicker.tsx
+│   │   │   └── ParameterSelector.tsx
+│   │   └── UI/
+│   │       ├── LoadingSpinner.tsx
+│   │       ├── ErrorMessage.tsx
+│   │       └── Modal.tsx
+│   ├── services/
+│   │   ├── arcgisService.ts
+│   │   ├── wateratlasApi.ts
+│   │   └── cacheService.ts
+│   ├── types/
+│   │   ├── waterbody.ts
+│   │   ├── samplingLocation.ts
+│   │   ├── samplingData.ts
+│   │   └── parameter.ts
+│   ├── utils/
+│   │   ├── dataProcessing.ts
+│   │   ├── dateHelpers.ts
+│   │   └── formatters.ts
+│   ├── hooks/
+│   │   ├── useWaterbodySelection.ts
+│   │   ├── useSamplingData.ts
+│   │   └── useCache.ts
+│   ├── store/
+│   │   └── appStore.ts
+│   ├── App.tsx
+│   └── main.tsx
+├── package.json
+├── tsconfig.json
+├── vite.config.ts
+└── README.md</code></pre>
+<h3 id="data-flow">5.3 Data Flow</h3>
+<pre><code>User Interaction
+    ↓
+Click Waterbody → Extract WBODYID
+    ↓
+API: /api/sampling-locations?waterBodyId={WBODYID}
+    ↓
+Display Station Markers + List
+    ↓
+Select Stations + Date Range + Parameter
+    ↓
+API: /api/samplingdata?stationIds=[...]&amp;parameter=...&amp;startDate=...
+    ↓
+Process Data (sort, filter, aggregate)
+    ↓
+Render Charts + Table
+    ↓
+User Exploration (zoom, filter, compare)</code></pre>
+<hr />
+<h2 id="api-integration-specifications">6. API Integration
+Specifications</h2>
+<h3 id="arcgis-mapserver-integration">6.1 ArcGIS MapServer
+Integration</h3>
+<p><strong>Base URL:</strong>
+<code>https://gis.waterinstitute.usf.edu/arcgis/rest/services/Maps/WaterAtlas_FrontPage/MapServer</code></p>
+<p><strong>Layer 14 (Waterbodies):</strong></p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Esri-Leaflet implementation</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> waterbodiesLayer <span class="op">=</span> L<span class="op">.</span><span class="at">esri</span><span class="op">.</span><span class="fu">featureLayer</span>({</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">url</span><span class="op">:</span> <span class="st">&#39;https://gis.waterinstitute.usf.edu/arcgis/rest/services/Maps/WaterAtlas_FrontPage/MapServer/14&#39;</span><span class="op">,</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">style</span><span class="op">:</span> {</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">color</span><span class="op">:</span> <span class="st">&#39;#4A90E2&#39;</span><span class="op">,</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">weight</span><span class="op">:</span> <span class="dv">2</span><span class="op">,</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">fillOpacity</span><span class="op">:</span> <span class="fl">0.3</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>waterbodiesLayer<span class="op">.</span><span class="fu">on</span>(<span class="st">&#39;click&#39;</span><span class="op">,</span> (e) <span class="kw">=&gt;</span> {</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> wbodyId <span class="op">=</span> e<span class="op">.</span><span class="at">layer</span><span class="op">.</span><span class="at">feature</span><span class="op">.</span><span class="at">properties</span><span class="op">.</span><span class="at">WBODYID</span><span class="op">;</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">handleWaterbodyClick</span>(wbodyId)<span class="op">;</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<h3 id="wateratlas-api-integration">6.2 WaterAtlas API Integration</h3>
+<p><strong>Base URL:</strong>
+<code>https://dev.api.wateratlas.org</code></p>
+<p><strong>Endpoint 1: Get Sampling Locations</strong></p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode typescript"><code class="sourceCode typescript"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>GET <span class="op">/</span>api<span class="op">/</span>sampling<span class="op">-</span>locations</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>Request<span class="op">:</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  waterBodyId<span class="op">:</span> <span class="dt">number</span><span class="op">,</span>  <span class="co">// Required</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  pageSize<span class="op">:</span> <span class="dt">number</span><span class="op">,</span>     <span class="co">// Default: 10, Recommended: 100</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  pageNumber<span class="op">:</span> <span class="dt">number</span>    <span class="co">// Default: 1</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>Response<span class="op">:</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  items<span class="op">:</span> <span class="bu">Array</span><span class="op">&lt;</span>{</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    stationId<span class="op">:</span> <span class="dt">string</span><span class="op">,</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    name<span class="op">:</span> <span class="dt">string</span><span class="op">,</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    latitude<span class="op">:</span> <span class="dt">string</span><span class="op">,</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    longitude<span class="op">:</span> <span class="dt">string</span><span class="op">,</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    waterBodyId<span class="op">:</span> <span class="dt">number</span><span class="op">,</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>    waterBodyName<span class="op">:</span> <span class="dt">string</span><span class="op">,</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>    dataSource<span class="op">:</span> <span class="dt">string</span><span class="op">,</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    county<span class="op">:</span> <span class="dt">string</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>  }<span class="op">&gt;,</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>  totalCount<span class="op">:</span> <span class="dt">number</span><span class="op">,</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>  pageNumber<span class="op">:</span> <span class="dt">number</span><span class="op">,</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>  pageSize<span class="op">:</span> <span class="dt">number</span><span class="op">,</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>  totalPages<span class="op">:</span> <span class="dt">number</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p><strong>Endpoint 2: Get Sampling Data</strong></p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode typescript"><code class="sourceCode typescript"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>GET <span class="op">/</span>api<span class="op">/</span>samplingdata</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>Request<span class="op">:</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  stationIds<span class="op">:</span> <span class="dt">string</span>[]<span class="op">,</span>     <span class="co">// Array of station IDs</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  parameter<span class="op">?:</span> <span class="dt">string</span><span class="op">,</span>       <span class="co">// DO_mgl, Chla_ugl, TN_mgl, TP_mgl</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  startDate<span class="op">?:</span> <span class="dt">string</span><span class="op">,</span>       <span class="co">// ISO 8601 format</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  endDate<span class="op">?:</span> <span class="dt">string</span><span class="op">,</span>         <span class="co">// ISO 8601 format</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  pageSize<span class="op">:</span> <span class="dt">number</span><span class="op">,</span>         <span class="co">// Default: 10, Recommended: 5000</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  pageNumber<span class="op">:</span> <span class="dt">number</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>Response<span class="op">:</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  items<span class="op">:</span> <span class="bu">Array</span><span class="op">&lt;</span>{</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    stationID<span class="op">:</span> <span class="dt">string</span><span class="op">,</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    activityStartDate<span class="op">:</span> <span class="dt">string</span><span class="op">,</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    parameter<span class="op">:</span> <span class="dt">string</span><span class="op">,</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>    characteristic<span class="op">:</span> <span class="dt">string</span><span class="op">,</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>    resultValue<span class="op">:</span> <span class="dt">number</span><span class="op">,</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>    resultUnit<span class="op">:</span> <span class="dt">string</span><span class="op">,</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>    medium<span class="op">:</span> <span class="dt">string</span><span class="op">,</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>    sampleFraction<span class="op">:</span> <span class="dt">string</span><span class="op">,</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>    wBodyID<span class="op">:</span> <span class="dt">number</span><span class="op">,</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>    waterBodyName<span class="op">:</span> <span class="dt">string</span><span class="op">,</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>    dataSource<span class="op">:</span> <span class="dt">string</span><span class="op">,</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>    resultComment<span class="op">?:</span> <span class="dt">string</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>  }<span class="op">&gt;,</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>  totalCount<span class="op">:</span> <span class="dt">number</span><span class="op">,</span></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>  pageNumber<span class="op">:</span> <span class="dt">number</span><span class="op">,</span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>  pageSize<span class="op">:</span> <span class="dt">number</span><span class="op">,</span></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>  totalPages<span class="op">:</span> <span class="dt">number</span></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p><strong>Endpoint 3: Get Parameters</strong></p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode typescript"><code class="sourceCode typescript"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>GET <span class="op">/</span>api<span class="op">/</span>parameters</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>Request<span class="op">:</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  parameterCode<span class="op">?:</span> <span class="dt">string</span><span class="op">,</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  name<span class="op">?:</span> <span class="dt">string</span><span class="op">,</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  pageSize<span class="op">:</span> <span class="dt">number</span><span class="op">,</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  pageNumber<span class="op">:</span> <span class="dt">number</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>Response<span class="op">:</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>  items<span class="op">:</span> <span class="bu">Array</span><span class="op">&lt;</span>{</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    parameterID<span class="op">:</span> <span class="dt">number</span><span class="op">,</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>    parameter<span class="op">:</span> <span class="dt">string</span><span class="op">,</span>      <span class="co">// Code (e.g., &quot;TN_mgl&quot;)</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    units<span class="op">:</span> <span class="dt">string</span><span class="op">,</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>    name<span class="op">:</span> <span class="dt">string</span><span class="op">,</span>          <span class="co">// Human-readable name</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>    precision<span class="op">:</span> <span class="dt">number</span><span class="op">,</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>    graphDisplayName<span class="op">:</span> <span class="dt">string</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>  }<span class="op">&gt;,</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>  totalCount<span class="op">:</span> <span class="dt">number</span><span class="op">,</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>  pageNumber<span class="op">:</span> <span class="dt">number</span><span class="op">,</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>  pageSize<span class="op">:</span> <span class="dt">number</span><span class="op">,</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>  totalPages<span class="op">:</span> <span class="dt">number</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<hr />
+<h2 id="user-interface-mockup-description">7. User Interface Mockup
+Description</h2>
+<h3 id="layout-components">7.1 Layout Components</h3>
+<p><strong>Main View (Desktop):</strong> - <strong>Left Sidebar (30%
+width):</strong> - Waterbody information panel - Station list with
+checkboxes - Date range picker - Parameter selector - Filter
+controls</p>
+<ul>
+<li><strong>Map View (70% width, top half):</strong>
+<ul>
+<li>Interactive map with waterbody layer</li>
+<li>Station markers</li>
+<li>Map controls (zoom, reset, layers)</li>
+</ul></li>
+<li><strong>Chart View (70% width, bottom half):</strong>
+<ul>
+<li>Time series charts</li>
+<li>Data table toggle</li>
+<li>Export buttons</li>
+</ul></li>
+</ul>
+<p><strong>Mobile View:</strong> - Full-width map (collapsible) - Bottom
+drawer for controls and data - Tab navigation between map/data/info -
+Hamburger menu for filters</p>
+<h3 id="color-scheme">7.2 Color Scheme</h3>
+<ul>
+<li><strong>Primary:</strong> Blue (#4A90E2) - Waterbodies</li>
+<li><strong>Secondary:</strong> Teal (#1ABC9C) - Station markers</li>
+<li><strong>Accent:</strong> Orange (#E67E22) -
+Selected/highlighted</li>
+<li><strong>Background:</strong> Light gray (#F5F7FA)</li>
+<li><strong>Text:</strong> Dark gray (#2C3E50)</li>
+</ul>
+<hr />
+<h2 id="success-criteria">8. Success Criteria</h2>
+<h3 id="functional-success">8.1 Functional Success</h3>
+<ul>
+<li>✓ User can click any Florida waterbody and view its information</li>
+<li>✓ All sampling stations display correctly on map</li>
+<li>✓ Water quality data loads and displays in charts</li>
+<li>✓ All four parameters (DO, Chla, TN, TP) visualized</li>
+<li>✓ Date filtering works correctly</li>
+<li>✓ Multi-station comparison functional</li>
+</ul>
+<h3 id="performance-success">8.2 Performance Success</h3>
+<ul>
+<li>✓ Initial load under 3 seconds</li>
+<li>✓ Map interactions feel responsive (&lt;100ms)</li>
+<li>✓ Charts render smoothly with 5000+ points</li>
+<li>✓ No memory leaks during extended use</li>
+</ul>
+<h3 id="quality-success">8.3 Quality Success</h3>
+<ul>
+<li>✓ Zero critical bugs in production</li>
+<li>✓ Accessibility audit passes</li>
+<li>✓ Works on all target browsers</li>
+<li>✓ Mobile experience is smooth</li>
+<li>✓ Code coverage &gt; 80%</li>
+</ul>
+<hr />
+<h2 id="development-phases">9. Development Phases</h2>
+<h3 id="phase-1-foundation-week-1-2">Phase 1: Foundation (Week 1-2)</h3>
+<ul>
+<li>Project setup and configuration</li>
+<li>Basic map implementation with Leaflet</li>
+<li>ArcGIS layer integration</li>
+<li>Waterbody click handling</li>
+</ul>
+<h3 id="phase-2-api-integration-week-3-4">Phase 2: API Integration (Week
+3-4)</h3>
+<ul>
+<li>WaterAtlas API service layer</li>
+<li>Sampling locations endpoint</li>
+<li>Station marker rendering</li>
+<li>Error handling and loading states</li>
+</ul>
+<h3 id="phase-3-data-visualization-week-5-6">Phase 3: Data Visualization
+(Week 5-6)</h3>
+<ul>
+<li>Chart.js integration</li>
+<li>Time series chart implementation</li>
+<li>Multi-parameter dashboard</li>
+<li>Data table view</li>
+</ul>
+<h3 id="phase-4-refinement-week-7-8">Phase 4: Refinement (Week 7-8)</h3>
+<ul>
+<li>Date range filtering</li>
+<li>Parameter selection</li>
+<li>Caching implementation</li>
+<li>Performance optimization</li>
+</ul>
+<h3 id="phase-5-polish-testing-week-9-10">Phase 5: Polish &amp; Testing
+(Week 9-10)</h3>
+<ul>
+<li>Responsive design</li>
+<li>Accessibility improvements</li>
+<li>Cross-browser testing</li>
+<li>Bug fixes and refinements</li>
+</ul>
+<h3 id="phase-6-deployment-week-11">Phase 6: Deployment (Week 11)</h3>
+<ul>
+<li>Production build optimization</li>
+<li>Deployment setup</li>
+<li>Documentation</li>
+<li>User acceptance testing</li>
+</ul>
+<hr />
+<h2 id="risks-and-mitigations">10. Risks and Mitigations</h2>
+<table>
+<colgroup>
+<col style="width: 15%" />
+<col style="width: 20%" />
+<col style="width: 33%" />
+<col style="width: 30%" />
+</colgroup>
+<thead>
+<tr>
+<th>Risk</th>
+<th>Impact</th>
+<th>Probability</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API rate limiting</td>
+<td>High</td>
+<td>Medium</td>
+<td>Implement caching, batch requests</td>
+</tr>
+<tr>
+<td>CORS issues</td>
+<td>High</td>
+<td>Medium</td>
+<td>Use proxy server, request API CORS config</td>
+</tr>
+<tr>
+<td>Large dataset performance</td>
+<td>Medium</td>
+<td>High</td>
+<td>Pagination, virtual scrolling, data sampling</td>
+</tr>
+<tr>
+<td>Browser compatibility</td>
+<td>Medium</td>
+<td>Low</td>
+<td>Polyfills, progressive enhancement</td>
+</tr>
+<tr>
+<td>Mobile performance</td>
+<td>Medium</td>
+<td>Medium</td>
+<td>Lazy loading, simplified mobile UI</td>
+</tr>
+<tr>
+<td>API downtime</td>
+<td>High</td>
+<td>Low</td>
+<td>Graceful degradation, cached data fallback</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="future-enhancements-out-of-scope-for-v1.0">11. Future
+Enhancements (Out of Scope for v1.0)</h2>
+<ul>
+<li>Multi-waterbody comparison</li>
+<li>Advanced statistical analysis (trend detection, anomaly
+detection)</li>
+<li>Water quality threshold alerts/notifications</li>
+<li>Historical data download (bulk export)</li>
+<li>User accounts and saved preferences</li>
+<li>Custom parameter support beyond the four hardcoded ones</li>
+<li>Real-time data updates (WebSocket integration)</li>
+<li>Predictive modeling</li>
+<li>Social sharing of visualizations</li>
+<li>Print-friendly reports</li>
+<li>3D terrain visualization</li>
+<li>Weather overlay integration</li>
+</ul>
+<hr />
+<h2 id="appendices">12. Appendices</h2>
+<h3 id="appendix-a-parameter-definitions">Appendix A: Parameter
+Definitions</h3>
+<ul>
+<li><strong>DO_mgl (Dissolved Oxygen):</strong> Amount of oxygen
+dissolved in water, critical for aquatic life. Measured in milligrams
+per liter (mg/L). Healthy levels typically range from 5-14 mg/L
+depending on temperature and salinity.</li>
+<li><strong>Chla_ugl (Chlorophyll-a):</strong> Indicator of algae
+biomass, relates to water clarity. Measured in micrograms per liter
+(µg/L). High levels indicate potential algal blooms and
+eutrophication.</li>
+<li><strong>TN_mgl (Total Nitrogen):</strong> Nutrient that can cause
+algal blooms when excessive. Measured in milligrams per liter (mg/L).
+Includes all forms of nitrogen (organic, ammonia, nitrate,
+nitrite).</li>
+<li><strong>TP_mgl (Total Phosphorus):</strong> Nutrient limiting factor
+in freshwater systems. Measured in milligrams per liter (mg/L). Often
+the primary driver of algal growth in lakes and rivers.</li>
+</ul>
+<h3 id="appendix-b-technical-references">Appendix B: Technical
+References</h3>
+<ul>
+<li><strong>Leaflet Documentation:</strong> https://leafletjs.com/</li>
+<li><strong>Esri-Leaflet Documentation:</strong>
+https://esri.github.io/esri-leaflet/</li>
+<li><strong>Chart.js Documentation:</strong>
+https://www.chartjs.org/</li>
+<li><strong>WaterAtlas API:</strong>
+https://dev.api.wateratlas.org/redoc/</li>
+<li><strong>ArcGIS REST API:</strong>
+https://developers.arcgis.com/rest/</li>
+</ul>
+<h3 id="appendix-c-example-api-calls">Appendix C: Example API Calls</h3>
+<p><strong>Example 1: Get Stations for Tampa Bay</strong></p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-X</span> GET <span class="st">&quot;https://dev.api.wateratlas.org/api/sampling-locations?waterBodyId=14143&amp;pageSize=100&amp;pageNumber=1&quot;</span></span></code></pre></div>
+<p><strong>Example 2: Get Dissolved Oxygen Data</strong></p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-X</span> GET <span class="st">&quot;https://dev.api.wateratlas.org/api/samplingdata?stationIds=G4SW0041&amp;parameter=DO_mgl&amp;startDate=2025-01-01T00:00:00Z&amp;endDate=2026-01-31T00:00:00Z&amp;pageSize=5000&quot;</span></span></code></pre></div>
+<p><strong>Example 3: Get Parameter Definitions</strong></p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-X</span> GET <span class="st">&quot;https://dev.api.wateratlas.org/api/parameters?pageSize=100&amp;pageNumber=1&quot;</span></span></code></pre></div>
+<h3 id="appendix-d-key-waterbody-fields-reference">Appendix D: Key
+Waterbody Fields Reference</h3>
+<table>
+<colgroup>
+<col style="width: 26%" />
+<col style="width: 24%" />
+<col style="width: 28%" />
+<col style="width: 20%" />
+</colgroup>
+<thead>
+<tr>
+<th>Field Name</th>
+<th>Data Type</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OBJECTID</td>
+<td>Integer</td>
+<td>Unique feature ID</td>
+<td>1234</td>
+</tr>
+<tr>
+<td>WBODYID</td>
+<td>Integer</td>
+<td>Waterbody identifier</td>
+<td>1002956</td>
+</tr>
+<tr>
+<td>WATERBODYNAME</td>
+<td>String(150)</td>
+<td>Official name</td>
+<td>“Blue Cove, Lake”</td>
+</tr>
+<tr>
+<td>ALTNAMES</td>
+<td>String(255)</td>
+<td>Alternative names</td>
+<td>“Lake Blue Cove”</td>
+</tr>
+<tr>
+<td>WBODYTYPE</td>
+<td>String(25)</td>
+<td>Type classification</td>
+<td>“Lake”, “River”, “Bay”</td>
+</tr>
+<tr>
+<td>LATITUDE_DD</td>
+<td>Double</td>
+<td>Centroid latitude</td>
+<td>29.05241</td>
+</tr>
+<tr>
+<td>LONGITUDE_DD</td>
+<td>Double</td>
+<td>Centroid longitude</td>
+<td>-82.45244</td>
+</tr>
+<tr>
+<td>SURFAREA_ACRES</td>
+<td>Double</td>
+<td>Surface area</td>
+<td>125.5</td>
+</tr>
+<tr>
+<td>RIVERLENGTH_FT</td>
+<td>Integer</td>
+<td>Length if river</td>
+<td>5280</td>
+</tr>
+<tr>
+<td>ATLAS</td>
+<td>String(50)</td>
+<td>Regional atlas</td>
+<td>“Tampa Bay”</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><strong>Document Status:</strong> Final v1.0<br />
+<strong>Approved By:</strong> Development Team<br />
+<strong>Next Steps:</strong> Convert to PDF, begin Phase 1
+development</p>
+<p><strong>Change Log:</strong> - v1.0 (2026-01-31): Initial release of
+comprehensive FRD</p>

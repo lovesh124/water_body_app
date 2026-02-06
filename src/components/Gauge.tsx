@@ -1,0 +1,80 @@
+import React from 'react';
+import { WaterQualityGauge } from '../types';
+import { PARAMETER_LABELS, getStatusColor } from '../utils/waterQuality';
+
+interface GaugeProps {
+  gauge: WaterQualityGauge;
+}
+
+const Gauge: React.FC<GaugeProps> = ({ gauge }) => {
+  const color = getStatusColor(gauge.status);
+  const percentage = gauge.value !== null ? Math.min((gauge.value / getMaxValue(gauge.parameter)) * 100, 100) : 0;
+
+  return (
+    <div className="bg-white rounded-lg shadow p-4">
+      <h3 className="text-sm font-semibold text-gray-700 mb-2">
+        {PARAMETER_LABELS[gauge.parameter] || gauge.parameter}
+      </h3>
+      
+      <div className="relative w-32 h-32 mx-auto">
+        <svg className="transform -rotate-90" viewBox="0 0 120 120">
+          {/* Background circle */}
+          <circle
+            cx="60"
+            cy="60"
+            r="50"
+            fill="none"
+            stroke="#e5e7eb"
+            strokeWidth="10"
+          />
+          
+          {/* Progress circle */}
+          <circle
+            cx="60"
+            cy="60"
+            r="50"
+            fill="none"
+            stroke={color}
+            strokeWidth="10"
+            strokeDasharray={`${2 * Math.PI * 50}`}
+            strokeDashoffset={`${2 * Math.PI * 50 * (1 - percentage / 100)}`}
+            strokeLinecap="round"
+          />
+        </svg>
+        
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-2xl font-bold" style={{ color }}>
+            {gauge.value !== null ? gauge.value.toFixed(2) : '--'}
+          </span>
+          <span className="text-xs text-gray-500">{gauge.unit}</span>
+        </div>
+      </div>
+      
+      <div className="mt-2 text-center">
+        <span 
+          className="inline-block px-2 py-1 rounded text-xs font-semibold text-white"
+          style={{ backgroundColor: color }}
+        >
+          {gauge.status.toUpperCase()}
+        </span>
+        {gauge.date && (
+          <p className="text-xs text-gray-500 mt-1">
+            {new Date(gauge.date).toLocaleDateString()}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const getMaxValue = (parameter: string): number => {
+  switch (parameter) {
+    case 'DO_mgl': return 15;
+    case 'Chla_ugl': return 50;
+    case 'TN_mgl': return 2;
+    case 'TP_mgl': return 0.2;
+    default: return 100;
+  }
+};
+
+export default Gauge;
