@@ -15,17 +15,20 @@ const Sidebar: React.FC<SidebarProps> = ({ waterbody, onClose }) => {
   const [stations, setStations] = useState<SamplingStation[]>([]);
   const [gauges, setGauges] = useState<WaterQualityGauge[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [showChart, setShowChart] = useState(false);
 
   useEffect(() => {
     if (waterbody) {
       console.log('Loading data for waterbody:', waterbody);
+      setError(null); // Clear any previous errors
       loadWaterbodyData();
     } else {
       // Reset state when no waterbody is selected
       setStations([]);
       setGauges([]);
       setLoading(false);
+      setError(null);
     }
   }, [waterbody]);
 
@@ -35,57 +38,72 @@ const Sidebar: React.FC<SidebarProps> = ({ waterbody, onClose }) => {
     setLoading(true);
     console.log('Fetching sampling stations for WBODYID:', waterbody.WBODYID);
     
-    // Load sampling stations
-    const samplingStations = await getSamplingLocations(waterbody.WBODYID);
-    console.log('Sampling stations received:', samplingStations);
-    setStations(samplingStations);
+    try {
+      // Load sampling stations
+      const samplingStations = await getSamplingLocations(waterbody.WBODYID);
+      console.log('Sampling stations received:', samplingStations);
+      console.log('Number of stations:', samplingStations.length);
+      setStations(samplingStations);
 
-    if (samplingStations.length > 0) {
-      const stationIds = samplingStations.map(s => s.stationId);
-      const parameters = [PARAMETERS.DO, PARAMETERS.CHLA, PARAMETERS.TN, PARAMETERS.TP];
-      
-      // Initialize gauges with loading state
-      const initialGauges: WaterQualityGauge[] = parameters.map(param => ({
-        parameter: param,
-        value: null,
-        unit: PARAMETER_UNITS[param],
-        status: 'unknown' as const,
-        date: null
-      }));
-      setGauges(initialGauges);
-      setLoading(false); // Show the skeleton gauges
-      
-      // Load data for each parameter progressively
-      for (let i = 0; i < parameters.length; i++) {
-        const param = parameters[i];
-        try {
-          const data = await getSamplingData(stationIds, param);
-          
-          if (data.length > 0) {
-            // Get the most recent data point
-            const latest = data.sort((a: any, b: any) => 
-              new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime()
-            )[0];
+      if (samplingStations.length > 0) {
+        const stationIds = samplingStations.map(s => s.stationId);
+        const parameters = [PARAMETERS.DO, PARAMETERS.CHLA, PARAMETERS.TN, PARAMETERS.TP];
+        
+        // Initialize gauges with loading state
+        const initialGauges: WaterQualityGauge[] = parameters.map(param => ({
+          parameter: param,
+          value: null,
+          unit: PARAMETER_UNITS[param],
+          status: 'unknown' as const,
+          date: null
+        }));
+        setGauges(initialGauges);
+        setLoading(false); // Show the skeleton gauges
+        
+        // Fetch ALL parameters in parallel for speed
+        const results = await Promise.allSettled(
+          parameters.map(param => getSamplingData(stationIds, param))
+        );
+        
+        // Process each result
+        const newGauges = parameters.map((param, i) => {
+          const result = results[i];
+          if (result.status === 'fulfilled' && result.value.length > 0) {
+            const data = result.value;
+            console.log(`Processing ${param}: ${data.length} points, first item:`, data[0]);
             
-            // Update the specific gauge
-            setGauges(prevGauges => {
-              const newGauges = [...prevGauges];
-              newGauges[i] = {
+            // Get the most recent data point
+            const latest = data
+              .filter((d: any) => d.dateTime && d.value !== null && d.value !== undefined)
+              .sort((a: any, b: any) => 
+                new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime()
+              )[0];
+            
+            if (latest) {
+              console.log(`Latest for ${param}: value=${latest.value}, date=${latest.dateTime}`);
+              return {
                 parameter: param,
                 value: latest.value,
                 unit: PARAMETER_UNITS[param],
                 status: evaluateWaterQuality(param, latest.value),
                 date: latest.dateTime
-              };
-              return newGauges;
-            });
+              } as WaterQualityGauge;
+            }
           }
-        } catch (error) {
-          console.error(`Error loading data for parameter ${param}:`, error);
-          // Keep the gauge in loading/unknown state
-        }
+          console.log(`No data for ${param}`);
+          return initialGauges[i];
+        });
+        
+        setGauges(newGauges);
+      } else {
+        console.log('No sampling stations found');
+        setGauges([]);
+        setLoading(false);
       }
-    } else {
+    } catch (error) {
+      console.error('Error loading waterbody data:', error);
+      setError('Failed to load water quality data. The API may be unavailable or the request timed out.');
+      setStations([]);
       setGauges([]);
       setLoading(false);
     }
@@ -173,6 +191,27 @@ const Sidebar: React.FC<SidebarProps> = ({ waterbody, onClose }) => {
             <div className="text-center py-8">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
               <p className="text-gray-500 mt-2">Loading water quality data...</p>
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && !loading && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+              <div className="flex items-start gap-3">
+                <svg className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+                <div>
+                  <h4 className="text-sm font-semibold text-red-800 mb-1">Error Loading Data</h4>
+                  <p className="text-sm text-red-700">{error}</p>
+                  <button
+                    onClick={loadWaterbodyData}
+                    className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
