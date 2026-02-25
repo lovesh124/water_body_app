@@ -12,8 +12,8 @@ const Gauge: React.FC<GaugeProps> = ({ gauge }) => {
   const isLoading = gauge.value === null;
 
   return (
-    <div className="bg-white rounded-lg shadow p-4">
-      <h3 className="text-sm font-semibold text-gray-700 mb-2">
+    <div className="bg-white dark:bg-black rounded-lg shadow p-4 border border-slate-200 dark:border-slate-700 transition-colors">
+      <h3 className="text-sm font-semibold text-gray-700 dark:text-slate-200 mb-2">
         {PARAMETER_LABELS[gauge.parameter] || gauge.parameter}
       </h3>
       
@@ -61,15 +61,15 @@ const Gauge: React.FC<GaugeProps> = ({ gauge }) => {
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           {isLoading ? (
             <>
-              <div className="w-12 h-6 bg-gray-200 rounded animate-pulse mb-1"></div>
-              <div className="w-8 h-3 bg-gray-200 rounded animate-pulse"></div>
+              <div className="w-12 h-6 bg-gray-200 dark:bg-slate-700 rounded animate-pulse mb-1"></div>
+              <div className="w-8 h-3 bg-gray-200 dark:bg-slate-700 rounded animate-pulse"></div>
             </>
           ) : (
             <>
               <span className="text-2xl font-bold" style={{ color }}>
                 {gauge.value !== null ? gauge.value.toFixed(2) : '--'}
               </span>
-              <span className="text-xs text-gray-500">{gauge.unit}</span>
+              <span className="text-xs text-gray-500 dark:text-slate-400">{gauge.unit}</span>
             </>
           )}
         </div>
@@ -77,7 +77,7 @@ const Gauge: React.FC<GaugeProps> = ({ gauge }) => {
       
       <div className="mt-2 text-center">
         {isLoading ? (
-          <div className="w-20 h-6 bg-gray-200 rounded animate-pulse mx-auto"></div>
+          <div className="w-20 h-6 bg-gray-200 dark:bg-slate-700 rounded animate-pulse mx-auto"></div>
         ) : (
           <>
             <span 
@@ -87,7 +87,7 @@ const Gauge: React.FC<GaugeProps> = ({ gauge }) => {
               {gauge.status.toUpperCase()}
             </span>
             {gauge.date && (
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
                 {new Date(gauge.date).toLocaleDateString()}
               </p>
             )}

@@ -6,6 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Florida Waterbody Dashboard</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script>
+      (function () {
+        try {
+          var savedTheme = localStorage.getItem('theme');
+          var useDark = savedTheme === 'dark';
+          document.documentElement.classList.toggle('dark', useDark);
+        } catch (e) {
+          // Ignore storage access issues and keep default theme.
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

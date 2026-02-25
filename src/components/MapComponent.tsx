@@ -113,15 +113,15 @@ const MapComponent: React.FC<MapComponentProps> = ({ onWaterbodySelect, county, 
   return (
     <div className="relative w-full h-full">
       {/* County Dropdown Overlay */}
-      <div className="absolute top-4 right-4 z-[1000] bg-white rounded-lg shadow-lg p-3">
-        <label htmlFor="county-select" className="block text-sm font-medium text-gray-700 mb-2">
+      <div className="absolute top-4 right-4 z-[1000] bg-white dark:bg-black border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg p-3 transition-colors">
+        <label htmlFor="county-select" className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">
           Filter by County:
         </label>
         <select
           id="county-select"
           value={county || ''}
           onChange={(e) => onCountyChange?.(e.target.value)}
-          className="block w-64 px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+          className="block w-64 px-3 py-2 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm text-slate-900 dark:text-slate-100"
         >
           <option value="">All Counties</option>
           {floridaCounties.map((countyName) => (

@@ -158,20 +158,20 @@ const Sidebar: React.FC<SidebarProps> = ({ waterbody, onClose }) => {
 
   return (
     <>
-      <div className="w-full h-full bg-white border-l border-gray-200">
+      <div className="w-full h-full bg-white dark:bg-black border-l border-gray-200 dark:border-slate-700 transition-colors">
         <div className="p-6 h-full overflow-y-auto">
           {/* No Waterbody Selected State */}
           {!waterbody && (
             <div className="flex flex-col items-center justify-center h-full text-center">
               <div className="mb-4">
-                <svg className="w-24 h-24 text-gray-300 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-24 h-24 text-gray-300 dark:text-slate-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-700 mb-2">
+              <h3 className="text-xl font-semibold text-gray-700 dark:text-slate-200 mb-2">
                 Select a Waterbody
               </h3>
-              <p className="text-gray-500 max-w-sm">
+              <p className="text-gray-500 dark:text-slate-400 max-w-sm">
                 Click on any waterbody on the map to view its water quality data and historical trends.
               </p>
             </div>
@@ -183,15 +183,15 @@ const Sidebar: React.FC<SidebarProps> = ({ waterbody, onClose }) => {
               {/* Header */}
               <div className="flex justify-between items-start mb-4">
                 <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-gray-800">
+                  <h2 className="text-2xl font-bold text-gray-800 dark:text-slate-100">
                     {waterbody.WATERBODYNAME}
                   </h2>
-                  <p className="text-sm text-gray-500">{waterbody.WBODYTYPE || 'Waterbody'}</p>
+                  <p className="text-sm text-gray-500 dark:text-slate-400">{waterbody.WBODYTYPE || 'Waterbody'}</p>
                 </div>
                 {onClose && (
                   <button
                     onClick={onClose}
-                    className="text-gray-500 hover:text-gray-700 text-2xl ml-2 md:hidden"
+                    className="text-gray-500 dark:text-slate-300 hover:text-gray-700 dark:hover:text-slate-100 text-2xl ml-2 md:hidden"
                     title="Clear selection"
                   >
                     ×
@@ -200,21 +200,21 @@ const Sidebar: React.FC<SidebarProps> = ({ waterbody, onClose }) => {
               </div>
 
           {/* Waterbody Info */}
-          <div className="bg-gray-50 rounded-lg p-4 mb-6">
+          <div className="bg-gray-50 dark:bg-black rounded-lg p-4 mb-6 border border-transparent dark:border-slate-800 transition-colors">
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
-                <p className="text-gray-500">Size</p>
-                <p className="font-semibold">
+                <p className="text-gray-500 dark:text-slate-400">Size</p>
+                <p className="font-semibold text-slate-900 dark:text-slate-100">
                   {waterbody.SURFAREA_ACRES != null ? `${waterbody.SURFAREA_ACRES.toFixed(1)} acres` : 'N/A'}
                 </p>
               </div>
               <div>
-                <p className="text-gray-500">Stations</p>
-                <p className="font-semibold">{stations.length}</p>
+                <p className="text-gray-500 dark:text-slate-400">Stations</p>
+                <p className="font-semibold text-slate-900 dark:text-slate-100">{stations.length}</p>
               </div>
               <div className="col-span-2">
-                <p className="text-gray-500">ID</p>
-                <p className="font-semibold text-xs">{waterbody.WBODYID}</p>
+                <p className="text-gray-500 dark:text-slate-400">ID</p>
+                <p className="font-semibold text-xs text-slate-900 dark:text-slate-100">{waterbody.WBODYID}</p>
               </div>
             </div>
           </div>
@@ -223,7 +223,7 @@ const Sidebar: React.FC<SidebarProps> = ({ waterbody, onClose }) => {
           {loading && (
             <div className="text-center py-8">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-              <p className="text-gray-500 mt-2">Loading water quality data...</p>
+              <p className="text-gray-500 dark:text-slate-400 mt-2">Loading water quality data...</p>
             </div>
           )}
 
@@ -251,7 +251,7 @@ const Sidebar: React.FC<SidebarProps> = ({ waterbody, onClose }) => {
           {/* Water Quality Gauges */}
           {!loading && stations.length > 0 && (
             <>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-slate-100 mb-4">
                 Water Quality Status
               </h3>
               
@@ -279,20 +279,20 @@ const Sidebar: React.FC<SidebarProps> = ({ waterbody, onClose }) => {
               </div>
 
               {/* Legend */}
-              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                <h4 className="text-sm font-semibold text-gray-700 mb-2">Status Legend</h4>
+              <div className="mt-6 p-4 bg-gray-50 dark:bg-black rounded-lg border border-transparent dark:border-slate-800 transition-colors">
+                <h4 className="text-sm font-semibold text-gray-700 dark:text-slate-200 mb-2">Status Legend</h4>
                 <div className="space-y-1 text-xs">
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-green-500 rounded"></div>
-                    <span>Good - Meets quality standards</span>
+                    <span className="text-slate-700 dark:text-slate-300">Good - Meets quality standards</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-yellow-500 rounded"></div>
-                    <span>Fair - Moderate concern</span>
+                    <span className="text-slate-700 dark:text-slate-300">Fair - Moderate concern</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-red-500 rounded"></div>
-                    <span>Poor - Below standards</span>
+                    <span className="text-slate-700 dark:text-slate-300">Poor - Below standards</span>
                   </div>
                 </div>
               </div>
@@ -302,7 +302,7 @@ const Sidebar: React.FC<SidebarProps> = ({ waterbody, onClose }) => {
           {/* No Stations Message */}
           {!loading && stations.length === 0 && waterbody && (
             <div className="text-center py-8">
-              <p className="text-gray-500">
+              <p className="text-gray-500 dark:text-slate-400">
                 No sampling stations found for this waterbody.
               </p>
             </div>

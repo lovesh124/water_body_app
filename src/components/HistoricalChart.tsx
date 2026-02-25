@@ -124,13 +124,13 @@ const HistoricalChart: React.FC<HistoricalChartProps> = ({ stationIds, onClose }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[2000] p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-auto">
+      <div className="bg-white dark:bg-black border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-auto transition-colors">
         <div className="p-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold text-gray-800">Historical Data</h2>
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-slate-100">Historical Data</h2>
             <button
               onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 text-2xl"
+              className="text-gray-500 dark:text-slate-300 hover:text-gray-700 dark:hover:text-slate-100 text-2xl"
             >
               ×
             </button>
@@ -138,7 +138,7 @@ const HistoricalChart: React.FC<HistoricalChartProps> = ({ stationIds, onClose }
 
           {/* Parameter Selection */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">
               Parameter
             </label>
             <div className="flex gap-2 flex-wrap">
@@ -149,7 +149,7 @@ const HistoricalChart: React.FC<HistoricalChartProps> = ({ stationIds, onClose }
                   className={`px-4 py-2 rounded ${
                     selectedParameter === param
                       ? 'bg-blue-500 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      : 'bg-gray-200 dark:bg-zinc-900 text-gray-700 dark:text-slate-200 hover:bg-gray-300 dark:hover:bg-zinc-800'
                   }`}
                 >
                   {PARAMETER_LABELS[param]}
@@ -160,7 +160,7 @@ const HistoricalChart: React.FC<HistoricalChartProps> = ({ stationIds, onClose }
 
           {/* Date Range Selection */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">
               Date Range
             </label>
             <div className="flex gap-2 flex-wrap">
@@ -171,7 +171,7 @@ const HistoricalChart: React.FC<HistoricalChartProps> = ({ stationIds, onClose }
                   className={`px-4 py-2 rounded ${
                     dateRange === range
                       ? 'bg-blue-500 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      : 'bg-gray-200 dark:bg-zinc-900 text-gray-700 dark:text-slate-200 hover:bg-gray-300 dark:hover:bg-zinc-800'
                   }`}
                 >
                   {range === 'all' ? 'All' : range.toUpperCase()}
@@ -184,21 +184,21 @@ const HistoricalChart: React.FC<HistoricalChartProps> = ({ stationIds, onClose }
           <div className="h-96 mb-4">
             {loading ? (
               <div className="flex items-center justify-center h-full">
-                <div className="text-gray-500">Loading data...</div>
+                <div className="text-gray-500 dark:text-slate-400">Loading data...</div>
               </div>
             ) : data.length > 0 ? (
               <Line data={chartData} options={options} />
             ) : (
               <div className="flex items-center justify-center h-full">
-                <div className="text-gray-500">No data available for this period</div>
+                <div className="text-gray-500 dark:text-slate-400">No data available for this period</div>
               </div>
             )}
           </div>
 
           {/* Data Summary */}
           {data.length > 0 && (
-            <div className="bg-gray-50 p-4 rounded">
-              <p className="text-sm text-gray-600">
+            <div className="bg-gray-50 dark:bg-black border border-transparent dark:border-slate-800 p-4 rounded transition-colors">
+              <p className="text-sm text-gray-600 dark:text-slate-300">
                 <strong>Data Points:</strong> {data.length} |{' '}
                 <strong>Average:</strong>{' '}
                 {(data.reduce((sum, d) => sum + d.value, 0) / data.length).toFixed(2)}{' '}

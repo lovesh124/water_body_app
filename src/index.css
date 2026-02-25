@@ -1,3 +1,4 @@
+@config "../tailwind.config.js";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -12,6 +13,22 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
+  background-color: #f1f5f9;
+  color: #0f172a;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+html.dark body {
+  background-color: #000000;
+  color: #e2e8f0;
+}
+
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
 }
 
 #root {
