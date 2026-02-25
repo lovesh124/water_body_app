@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Waterbody, SamplingStation, WaterQualityGauge } from '../types';
+import React, { useEffect, useRef, useState } from 'react';
+import { Waterbody, SamplingStation, WaterQualityData, WaterQualityGauge } from '../types';
 import { getSamplingLocations, getSamplingData } from '../services/api';
 import { PARAMETERS, PARAMETER_LABELS, PARAMETER_UNITS, evaluateWaterQuality } from '../utils/waterQuality';
 import { exportToCSV } from '../utils/waterQuality';
@@ -17,30 +17,83 @@ const Sidebar: React.FC<SidebarProps> = ({ waterbody, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showChart, setShowChart] = useState(false);
+  const activeRequestControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
+    // Cancel any previous in-flight request chain before starting a new one.
+    activeRequestControllerRef.current?.abort();
+
     if (waterbody) {
       console.log('Loading data for waterbody:', waterbody);
       setError(null); // Clear any previous errors
-      loadWaterbodyData();
+      const controller = new AbortController();
+      activeRequestControllerRef.current = controller;
+      loadWaterbodyData(controller.signal);
     } else {
+      activeRequestControllerRef.current = null;
       // Reset state when no waterbody is selected
       setStations([]);
       setGauges([]);
       setLoading(false);
       setError(null);
     }
+
+    return () => {
+      activeRequestControllerRef.current?.abort();
+    };
   }, [waterbody]);
 
-  const loadWaterbodyData = async () => {
+  const getLatestGaugeFromData = (
+    parameter: string,
+    data: WaterQualityData[],
+    fallback: WaterQualityGauge
+  ): WaterQualityGauge => {
+    if (data.length > 0) {
+      console.log(`Processing ${parameter}: ${data.length} points, first item:`, data[0]);
+
+      const latest = data
+        .filter((d: any) => d.dateTime && d.value !== null && d.value !== undefined)
+        .sort((a: any, b: any) =>
+          new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime()
+        )[0];
+
+      if (latest) {
+        console.log(`Latest for ${parameter}: value=${latest.value}, date=${latest.dateTime}`);
+        return {
+          parameter,
+          value: latest.value,
+          unit: PARAMETER_UNITS[parameter],
+          status: evaluateWaterQuality(parameter, latest.value),
+          date: latest.dateTime
+        } as WaterQualityGauge;
+      }
+    }
+
+    console.log(`No data for ${parameter}`);
+    return fallback;
+  };
+
+  const retryLoadWaterbodyData = () => {
     if (!waterbody) return;
+
+    activeRequestControllerRef.current?.abort();
+    const controller = new AbortController();
+    activeRequestControllerRef.current = controller;
+    setError(null);
+    loadWaterbodyData(controller.signal);
+  };
+
+  const loadWaterbodyData = async (signal: AbortSignal) => {
+    if (!waterbody || signal.aborted) return;
 
     setLoading(true);
     console.log('Fetching sampling stations for WBODYID:', waterbody.WBODYID);
     
     try {
       // Load sampling stations
-      const samplingStations = await getSamplingLocations(waterbody.WBODYID);
+      const samplingStations = await getSamplingLocations(waterbody.WBODYID, signal);
+      if (signal.aborted) return;
+
       console.log('Sampling stations received:', samplingStations);
       console.log('Number of stations:', samplingStations.length);
       setStations(samplingStations);
@@ -60,47 +113,27 @@ const Sidebar: React.FC<SidebarProps> = ({ waterbody, onClose }) => {
         setGauges(initialGauges);
         setLoading(false); // Show the skeleton gauges
         
-        // Fetch ALL parameters in parallel for speed
-        const results = await Promise.allSettled(
-          parameters.map(param => getSamplingData(stationIds, param))
-        );
-        
-        // Process each result
-        const newGauges = parameters.map((param, i) => {
-          const result = results[i];
-          if (result.status === 'fulfilled' && result.value.length > 0) {
-            const data = result.value;
-            console.log(`Processing ${param}: ${data.length} points, first item:`, data[0]);
-            
-            // Get the most recent data point
-            const latest = data
-              .filter((d: any) => d.dateTime && d.value !== null && d.value !== undefined)
-              .sort((a: any, b: any) => 
-                new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime()
-              )[0];
-            
-            if (latest) {
-              console.log(`Latest for ${param}: value=${latest.value}, date=${latest.dateTime}`);
-              return {
-                parameter: param,
-                value: latest.value,
-                unit: PARAMETER_UNITS[param],
-                status: evaluateWaterQuality(param, latest.value),
-                date: latest.dateTime
-              } as WaterQualityGauge;
-            }
-          }
-          console.log(`No data for ${param}`);
-          return initialGauges[i];
-        });
-        
-        setGauges(newGauges);
+        // Fetch parameters sequentially and update each gauge as soon as data arrives.
+        for (const [index, param] of parameters.entries()) {
+          const data = await getSamplingData(stationIds, param, undefined, undefined, signal);
+          if (signal.aborted) return;
+
+          setGauges(prevGauges => {
+            const nextGauges = [...prevGauges];
+            nextGauges[index] = getLatestGaugeFromData(param, data, initialGauges[index]);
+            return nextGauges;
+          });
+        }
       } else {
         console.log('No sampling stations found');
         setGauges([]);
         setLoading(false);
       }
     } catch (error) {
+      if (signal.aborted) {
+        return;
+      }
+
       console.error('Error loading waterbody data:', error);
       setError('Failed to load water quality data. The API may be unavailable or the request timed out.');
       setStations([]);
@@ -205,7 +238,7 @@ const Sidebar: React.FC<SidebarProps> = ({ waterbody, onClose }) => {
                   <h4 className="text-sm font-semibold text-red-800 mb-1">Error Loading Data</h4>
                   <p className="text-sm text-red-700">{error}</p>
                   <button
-                    onClick={loadWaterbodyData}
+                    onClick={retryLoadWaterbodyData}
                     className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
                   >
                     Try Again

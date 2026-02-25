@@ -7,10 +7,13 @@ const BASE_URL = import.meta.env.DEV ? '' : 'https://dev.api.wateratlas.org';
 
 export const api = axios.create({
   baseURL: BASE_URL,
-  timeout: 30000, // 30 seconds timeout
+  timeout: 60000, // 60 seconds timeout
 });
 
-export const getSamplingLocations = async (waterBodyId: string): Promise<SamplingStation[]> => {
+export const getSamplingLocations = async (
+  waterBodyId: string,
+  signal?: AbortSignal
+): Promise<SamplingStation[]> => {
   try {
     console.log('API call: getSamplingLocations for waterBodyId:', waterBodyId);
     
@@ -20,7 +23,8 @@ export const getSamplingLocations = async (waterBodyId: string): Promise<Samplin
         waterBodyId,
         pageNumber: 1,
         pageSize: 10
-      }
+      },
+      signal
     });
     
     if (response.data && response.data.items) {
@@ -30,6 +34,10 @@ export const getSamplingLocations = async (waterBodyId: string): Promise<Samplin
     
     return [];
   } catch (error) {
+    if (axios.isAxiosError(error) && error.code === 'ERR_CANCELED') {
+      return [];
+    }
+
     console.error('Error fetching sampling locations:', error);
     if (axios.isAxiosError(error)) {
       console.error('Response status:', error.response?.status);
@@ -42,7 +50,8 @@ export const getSamplingData = async (
   stationIds: string[],
   parameter: string,
   startDate?: string,
-  endDate?: string
+  endDate?: string,
+  signal?: AbortSignal
 ): Promise<WaterQualityData[]> => {
   try {
     // Deduplicate and limit station IDs to avoid URL-too-long errors
@@ -59,7 +68,8 @@ export const getSamplingData = async (
         pageNumber: 1,
         ...(startDate && { startDate }),
         ...(endDate && { endDate })
-      }
+      },
+      signal
     });
     
     // Handle paginated response with items array
@@ -84,6 +94,10 @@ export const getSamplingData = async (
     
     return [];
   } catch (error) {
+    if (axios.isAxiosError(error) && error.code === 'ERR_CANCELED') {
+      return [];
+    }
+
     console.error(`Error fetching ${parameter}:`, error);
     return [];
   }
