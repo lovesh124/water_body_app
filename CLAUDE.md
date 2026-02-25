@@ -56,6 +56,8 @@ Parameter API IDs: `DO_mgl`, `Chla_ugl`, `TN_mgl`, `TP_mgl`
 
 Light/dark mode is toggled in `App.tsx` and persisted to `localStorage`. The Tailwind `dark:` variant is driven by a `dark` class on `<html>`. The theme is also set via `data-theme` attribute.
 
+**Tailwind config split:** There are two Tailwind config files — `tailwind.config.js` (ESM, for editor tooling) and `tailwind.config.cjs` (CommonJS, used at build time). **Always edit `tailwind.config.cjs`** for changes that affect the build. The `.cjs` file is necessary because Node.js v22+ loads `.js` ES modules via a separate registry that bypasses `require.cache`, which breaks Tailwind's config hot-reload. `src/index.css` uses `@config "../tailwind.config.cjs"` to explicitly point Tailwind at the CJS file, and `postcss.config.js` also references it directly.
+
 ### County Filter
 
 `MapComponent` accepts a `county` prop. When set, the Esri feature layer applies `WHERE ATLAS_<COUNTY> = 'Y'`. The available counties are hard-coded in `MapComponent` (`Hillsborough`, `Pinellas`, `Manatee`, `Sarasota`, `Polk`, `Seminole`, `Lake`, `Orange`). The default is `Hillsborough`.
