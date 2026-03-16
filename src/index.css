@@ -40,3 +40,8 @@ html.dark {
   height: 100%;
   width: 100%;
 }
+
+.leaflet-interactive:focus {
+  outline: none;
+}
+

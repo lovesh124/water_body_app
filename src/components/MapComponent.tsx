@@ -10,15 +10,7 @@ interface MapComponentProps {
 }
 
 const MapComponent: React.FC<MapComponentProps> = ({ onWaterbodySelect, county, onCountyChange }) => {
-  const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const layerRef = useRef<any>(null);
-  const onWaterbodySelectRef = useRef(onWaterbodySelect);
-
-  // Keep the callback ref up to date
-  useEffect(() => {
-    onWaterbodySelectRef.current = onWaterbodySelect;
-  }, [onWaterbodySelect]);
 
   // Counties available in the Water Atlas service
   // These are based on the ATLAS_<COUNTY> fields in the service
@@ -34,26 +26,22 @@ const MapComponent: React.FC<MapComponentProps> = ({ onWaterbodySelect, county, 
   ];
 
   useEffect(() => {
-    if (!mapContainerRef.current || mapRef.current) return;
+    if (!mapContainerRef.current) return;
 
     // Initialize map
-    const map = L.map(mapContainerRef.current, {
-      center: [27.9, -82.5],
-      zoom: 7,
-      zoomControl: true
-    });
-
-    mapRef.current = map;
+    const map = L.map(mapContainerRef.current).setView([27.9, -82.5], 7);
 
     // Add base layer
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '\u00a9 OpenStreetMap contributors'
     }).addTo(map);
 
-    // Add ArcGIS waterbody layer with optional county filter
-    // The service uses ATLAS_<COUNTY> fields with 'Y' values
+    // Add ArcGIS waterbody layer
+    const whereClause = county ? `ATLAS_${county.toUpperCase()} = 'Y'` : "1=1";
+    
     const waterbodyLayer = (esri as any).featureLayer({
       url: 'https://gis.waterinstitute.usf.edu/arcgis/rest/services/Maps/WaterAtlas_FrontPage/MapServer/14',
+      where: whereClause,
       style: function () {
         return {
           fillColor: '#0ea5e9',
@@ -61,11 +49,8 @@ const MapComponent: React.FC<MapComponentProps> = ({ onWaterbodySelect, county, 
           color: '#0284c7',
           weight: 2
         };
-      },
-      ...(county ? { where: `ATLAS_${county.toUpperCase()} = 'Y'` } : {})
-    });
-
-    layerRef.current = waterbodyLayer;
+      }
+    }).addTo(map);
 
     // Handle waterbody click
     waterbodyLayer.on('click', function (e: any) {
@@ -85,12 +70,30 @@ const MapComponent: React.FC<MapComponentProps> = ({ onWaterbodySelect, county, 
       if (e.layer.getBounds) {
         map.fitBounds(e.layer.getBounds());
       }
+      
+      // Close tooltip so it doesn't get stuck after zoom
+      if (e.layer.closeTooltip) {
+        e.layer.closeTooltip();
+      }
 
-      onWaterbodySelectRef.current(waterbody);
+      onWaterbodySelect(waterbody);
     });
 
     // Handle hover effect
     waterbodyLayer.on('mouseover', function (e: any) {
+      const props = e.layer.feature?.properties || {};
+      const tooltipContent = [
+        `<strong>${props.WATERBODYNAME || 'Unknown Waterbody'}</strong>`,
+        props.WBODYTYPE ? `Type: ${props.WBODYTYPE}` : null,
+        props.WBODYID ? `ID: ${props.WBODYID}` : null
+      ].filter(Boolean).join('<br/>');
+
+      e.layer.bindTooltip(tooltipContent, {
+        direction: 'top',
+        sticky: true,
+        opacity: 0.95
+      }).openTooltip();
+
       e.layer.setStyle({
         fillOpacity: 0.6
       });
@@ -100,15 +103,13 @@ const MapComponent: React.FC<MapComponentProps> = ({ onWaterbodySelect, county, 
       e.layer.setStyle({
         fillOpacity: 0.3
       });
+      e.layer.closeTooltip();
     });
-
-    waterbodyLayer.addTo(map);
 
     return () => {
       map.remove();
-      mapRef.current = null;
     };
-  }, [county]);
+  }, [county, onWaterbodySelect]);
 
   return (
     <div className="relative w-full h-full">

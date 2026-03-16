@@ -104,6 +104,10 @@ const getMaxValue = (parameter: string): number => {
     case 'Chla_ugl': return 50;
     case 'TN_mgl': return 2;
     case 'TP_mgl': return 0.2;
+    case 'pH': return 14;
+    case 'Secchi_ft': return 12;
+    case 'TempW_C': return 40;
+    case 'DO_percent': return 150;
     default: return 100;
   }
 };

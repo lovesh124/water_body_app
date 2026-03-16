@@ -100,7 +100,16 @@ const Sidebar: React.FC<SidebarProps> = ({ waterbody, onClose }) => {
 
       if (samplingStations.length > 0) {
         const stationIds = samplingStations.map(s => s.stationId);
-        const parameters = [PARAMETERS.DO, PARAMETERS.CHLA, PARAMETERS.TN, PARAMETERS.TP];
+        const parameters = [
+          PARAMETERS.DO,
+          PARAMETERS.CHLA,
+          PARAMETERS.TN,
+          PARAMETERS.TP,
+          PARAMETERS.PH,
+          PARAMETERS.SECCHI,
+          PARAMETERS.TEMP_WATER_C,
+          PARAMETERS.DO_PERCENT
+        ];
         
         // Initialize gauges with loading state
         const initialGauges: WaterQualityGauge[] = parameters.map(param => ({

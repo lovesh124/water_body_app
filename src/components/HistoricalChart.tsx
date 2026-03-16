@@ -13,7 +13,7 @@ import {
 } from 'chart.js';
 import { WaterQualityData, DateRange } from '../types';
 import { getSamplingData } from '../services/api';
-import { PARAMETER_LABELS, PARAMETER_UNITS, getStatusColor } from '../utils/waterQuality';
+import { PARAMETERS, PARAMETER_LABELS, PARAMETER_UNITS, getStatusColor } from '../utils/waterQuality';
 
 ChartJS.register(
   CategoryScale,
@@ -36,8 +36,18 @@ const HistoricalChart: React.FC<HistoricalChartProps> = ({ stationIds, onClose }
   const [dateRange, setDateRange] = useState<DateRange>('1yr');
   const [data, setData] = useState<WaterQualityData[]>([]);
   const [loading, setLoading] = useState(false);
+  const [hoveredPoint, setHoveredPoint] = useState<WaterQualityData | null>(null);
 
-  const parameters = ['DO_mgl', 'Chla_ugl', 'TN_mgl', 'TP_mgl'];
+  const parameters = [
+    PARAMETERS.DO,
+    PARAMETERS.CHLA,
+    PARAMETERS.TN,
+    PARAMETERS.TP,
+    PARAMETERS.PH,
+    PARAMETERS.SECCHI,
+    PARAMETERS.TEMP_WATER_C,
+    PARAMETERS.DO_PERCENT
+  ];
 
   useEffect(() => {
     loadData();
@@ -46,6 +56,7 @@ const HistoricalChart: React.FC<HistoricalChartProps> = ({ stationIds, onClose }
   const loadData = async () => {
     if (stationIds.length === 0) return;
     
+    setHoveredPoint(null);
     setLoading(true);
     const endDate = new Date();
     const startDate = new Date();
@@ -87,7 +98,10 @@ const HistoricalChart: React.FC<HistoricalChartProps> = ({ stationIds, onClose }
         data: data.map(d => d.value),
         borderColor: getStatusColor('good'),
         backgroundColor: getStatusColor('good') + '20',
-        tension: 0.3
+        tension: 0.3,
+        pointRadius: 3,
+        pointHoverRadius: 6,
+        pointHitRadius: 12
       }
     ]
   };
@@ -95,6 +109,18 @@ const HistoricalChart: React.FC<HistoricalChartProps> = ({ stationIds, onClose }
   const options = {
     responsive: true,
     maintainAspectRatio: false,
+    interaction: {
+      mode: 'nearest' as const,
+      intersect: false
+    },
+    onHover: (_event: any, elements: any[]) => {
+      if (elements.length > 0) {
+        const dataIndex = elements[0].index;
+        setHoveredPoint(data[dataIndex] ?? null);
+      } else {
+        setHoveredPoint(null);
+      }
+    },
     plugins: {
       legend: {
         position: 'top' as const,
@@ -105,8 +131,20 @@ const HistoricalChart: React.FC<HistoricalChartProps> = ({ stationIds, onClose }
       },
       tooltip: {
         callbacks: {
+          title: function(context: any) {
+            const point = data[context[0]?.dataIndex];
+            if (!point?.dateTime) return 'Unknown date';
+            return new Date(point.dateTime).toLocaleString();
+          },
           label: function(context: any) {
-            return `${context.parsed.y.toFixed(2)} ${PARAMETER_UNITS[selectedParameter]}`;
+            const point = data[context.dataIndex];
+            const unit = PARAMETER_UNITS[selectedParameter] || '';
+            const value = context.parsed.y.toFixed(2);
+            const valueWithUnit = unit ? `${value} ${unit}` : value;
+            if (point?.stationId) {
+              return `Value: ${valueWithUnit} (Station ${point.stationId})`;
+            }
+            return `Value: ${valueWithUnit}`;
           }
         }
       }
@@ -194,6 +232,26 @@ const HistoricalChart: React.FC<HistoricalChartProps> = ({ stationIds, onClose }
               </div>
             )}
           </div>
+
+          {data.length > 0 && (
+            <div className="mb-4 bg-blue-50 dark:bg-zinc-900 border border-blue-100 dark:border-slate-700 p-4 rounded transition-colors">
+              {hoveredPoint ? (
+                <p className="text-sm text-slate-700 dark:text-slate-200">
+                  <strong>{PARAMETER_LABELS[selectedParameter]}:</strong>{' '}
+                  {hoveredPoint.value.toFixed(2)}
+                  {PARAMETER_UNITS[selectedParameter] ? ` ${PARAMETER_UNITS[selectedParameter]}` : ''}
+                  {' | '}
+                  <strong>Date:</strong> {new Date(hoveredPoint.dateTime).toLocaleString()}
+                  {' | '}
+                  <strong>Station:</strong> {hoveredPoint.stationId || 'N/A'}
+                </p>
+              ) : (
+                <p className="text-sm text-slate-600 dark:text-slate-300">
+                  Hover over a chart point to see detailed values and sample date.
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Data Summary */}
           {data.length > 0 && (
