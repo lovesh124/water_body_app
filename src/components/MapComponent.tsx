@@ -28,8 +28,12 @@ const MapComponent: React.FC<MapComponentProps> = ({ onWaterbodySelect, county, 
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
-    // Initialize map
-    const map = L.map(mapContainerRef.current).setView([27.9, -82.5], 7);
+    // Initialize map with faster scroll wheel zooming
+    const map = L.map(mapContainerRef.current, {
+      wheelPxPerZoomLevel: 40, // Default is 60. Lower = faster scroll zooming
+      zoomDelta: 1,
+      zoomSnap: 1,
+    }).setView([27.9, -82.5], 7);
 
     // Add base layer
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -66,9 +70,12 @@ const MapComponent: React.FC<MapComponentProps> = ({ onWaterbodySelect, county, 
 
       console.log('Passing waterbody to sidebar:', waterbody);
 
-      // Zoom to waterbody bounds
+      // Zoom to waterbody bounds with a faster animation
       if (e.layer.getBounds) {
-        map.fitBounds(e.layer.getBounds());
+        map.fitBounds(e.layer.getBounds(), {
+          animate: true,
+          duration: 0.35 // Default is 0.5 to 1.0s. Lower is faster.
+        });
       }
       
       // Close tooltip so it doesn't get stuck after zoom
