@@ -17,12 +17,13 @@ export const getSamplingLocations = async (
   try {
     console.log('API call: getSamplingLocations for waterBodyId:', waterBodyId);
     
-    // Only fetch a few stations - we just need some station IDs for data queries
+    // Only fetch a few stations to speed up the upstream data queries.
+    // We only need a handful of locations to get reliable parameter readings.
     const response = await api.get(`/api/sampling-locations`, {
       params: { 
         waterBodyId,
         pageNumber: 1,
-        pageSize: 10
+        pageSize: 5 // Reduced from 10 to speed up query
       },
       signal
     });
@@ -54,17 +55,19 @@ export const getSamplingData = async (
   signal?: AbortSignal
 ): Promise<WaterQualityData[]> => {
   try {
-    // Deduplicate and limit station IDs to avoid URL-too-long errors
+    // Deduplicate and limit station IDs to avoid massive long-running database queries
+    // Reduced from 5 to 2 stations to inherently speed up the API's query time
     const uniqueStationIds = [...new Set(stationIds)];
-    const limitedStationIds = uniqueStationIds.slice(0, 5);
+    const limitedStationIds = uniqueStationIds.slice(0, 2);
     console.log(`Fetching ${parameter}, using ${limitedStationIds.length} of ${uniqueStationIds.length} unique stations`);
     
-    // Only fetch 1 page with few results - we just need the latest value
+    // Only fetch 1 page with very few results to minimize payload payload size
+    // Reduced from 10 to 3 since we just need the latest available value
     const response = await api.get(`/api/samplingdata`, {
       params: {
         stationIds: limitedStationIds.join(','),
         parameter,
-        pageSize: 10,
+        pageSize: 3,
         pageNumber: 1,
         ...(startDate && { startDate }),
         ...(endDate && { endDate })
